@@ -33,6 +33,7 @@ interface GameStoreState {
   // Floating Delta Accumulator (V1 Debounced style)
   accumulatedDelta: number;
   isDeltaVisible: boolean;
+  pendingDamage: number;
   deltaTimerId: ReturnType<typeof setTimeout> | null;
 
   // Live Turn State
@@ -59,6 +60,7 @@ interface GameStoreState {
   adjustPlayerLife: (amount: number) => void;
   adjustPoison: (amount: number) => void;
   adjustCommanderDamage: (amount: number) => void;
+  adjustPermanentCounters: (instanceId: string, amount: number) => void;
   dismissPermanent: (instanceId: string) => void;
   clearAllPermanents: () => void;
   triggerEvent: (forceCardId?: string) => void;
@@ -114,6 +116,7 @@ export const useGameStore = create<GameStoreState>()(
 
       accumulatedDelta: 0,
       isDeltaVisible: false,
+      pendingDamage: 0,
       deltaTimerId: null,
 
       turn: 1,
@@ -131,7 +134,6 @@ export const useGameStore = create<GameStoreState>()(
         const state = get();
         const newHealth = Math.max(0, state.opponentHealth + delta);
         const damageDone = delta < 0 ? Math.abs(delta) : 0;
-        const newTotalDamage = state.totalDamageDealt + damageDone;
         const win = checkVictory(
           newHealth,
           state.opponentPoison,
@@ -148,36 +150,46 @@ export const useGameStore = create<GameStoreState>()(
           });
         }
 
-        const snapshots = [...state.turnSnapshots];
-        const lastIdx = snapshots.length - 1;
-        if (lastIdx >= 0 && snapshots[lastIdx].turn === state.turn) {
-          snapshots[lastIdx] = {
-            ...snapshots[lastIdx],
-            opponentHealth: newHealth,
-            damageThisTurn: snapshots[lastIdx].damageThisTurn + damageDone,
-            totalDamage: newTotalDamage,
-          };
-        }
-
         if (state.deltaTimerId) {
           clearTimeout(state.deltaTimerId);
         }
 
         const newAccumulated = state.accumulatedDelta + delta;
+        const pendingDamage = delta < 0
+          ? state.pendingDamage + damageDone
+          : Math.max(0, state.pendingDamage - delta);
 
         const timerId = setTimeout(() => {
-          set({ isDeltaVisible: false, accumulatedDelta: 0, deltaTimerId: null });
+          set((current) => {
+            const resolvedDamage = current.pendingDamage;
+            const snapshots = [...current.turnSnapshots];
+            const lastIdx = snapshots.length - 1;
+            if (lastIdx >= 0 && snapshots[lastIdx].turn === current.turn) {
+              snapshots[lastIdx] = {
+                ...snapshots[lastIdx],
+                damageThisTurn: snapshots[lastIdx].damageThisTurn + resolvedDamage,
+                totalDamage: current.totalDamageDealt + resolvedDamage,
+              };
+            }
+            return {
+              totalDamageDealt: current.totalDamageDealt + resolvedDamage,
+              pendingDamage: 0,
+              accumulatedDelta: 0,
+              isDeltaVisible: false,
+              deltaTimerId: null,
+              turnSnapshots: snapshots,
+            };
+          });
         }, 1600);
 
         set({
           opponentHealth: newHealth,
-          totalDamageDealt: newTotalDamage,
+          pendingDamage,
           isGameOver: win.isWon,
           winReason: win.reason,
           accumulatedDelta: newAccumulated,
           isDeltaVisible: true,
           deltaTimerId: timerId,
-          turnSnapshots: snapshots,
         });
       },
 
@@ -286,6 +298,16 @@ export const useGameStore = create<GameStoreState>()(
         }));
       },
 
+      adjustPermanentCounters: (instanceId, amount) => {
+        set((state) => ({
+          activePermanents: state.activePermanents.map((permanent) =>
+            permanent.instanceId === instanceId
+              ? { ...permanent, counters: Math.max(0, permanent.counters + amount) }
+              : permanent
+          ),
+        }));
+      },
+
       dismissPermanent: (instanceId: string) => {
         set((state) => ({
           activePermanents: state.activePermanents.filter((p) => p.instanceId !== instanceId),
@@ -320,6 +342,7 @@ export const useGameStore = create<GameStoreState>()(
             flavorText: cardDef.flavorText,
             power: computed.power ?? cardDef.basePower,
             toughness: computed.toughness ?? cardDef.baseToughness,
+            counters: cardDef.initialCounters ?? 0,
             turnPlayed: state.turn,
           };
           set({
@@ -412,6 +435,7 @@ export const useGameStore = create<GameStoreState>()(
           totalDamageDealt: 0,
           accumulatedDelta: 0,
           isDeltaVisible: false,
+          pendingDamage: 0,
           deltaTimerId: null,
           isGameOver: false,
           winReason: null,

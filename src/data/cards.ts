@@ -43,9 +43,9 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 2,
     flavorText: 'It hops in the way of your attacks whether it wants to or not.',
-    templateText: 'Reach, Deathtouch.\nThis creature must block your highest power attacker if able.',
+    templateText: 'Defender, Reach, Deathtouch.\nThis creature must block your highest power attacker if able.',
     computeStats: () => ({
-      renderedText: 'Reach, Deathtouch.\nThis creature must block your highest power attacker if able.',
+      renderedText: 'Defender, Reach, Deathtouch.\nThis creature must block your highest power attacker if able.',
       power: 1,
       toughness: 2,
     }),
@@ -168,10 +168,11 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     minTurn: 3,
     basePower: 3,
     baseToughness: 3,
+    initialCounters: 1,
     flavorText: 'A very good boy who demands his treat taxes promptly.',
-    templateText: 'Vigilance.\nWhenever you cast your second spell each turn, Mowu gains +1/+1 and you lose 2 life.',
+    templateText: 'Haste, Vigilance.\nWhenever you cast your second spell each turn, Mowu gains +1/+1 and you lose 2 life.',
     computeStats: () => ({
-      renderedText: 'Vigilance.\nWhenever you cast your second spell each turn, Mowu gets a +1/+1 counter and you lose 2 life.',
+      renderedText: 'Haste, Vigilance.\nWhenever you cast your second spell each turn, Mowu gets a +1/+1 counter and you lose 2 life.',
       power: 3,
       toughness: 3,
     }),
@@ -187,12 +188,13 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     minTurn: 2,
     basePower: 1,
     baseToughness: 1,
+    initialCounters: 1,
     flavorText: 'Buzzing with concentrated infect.',
-    templateText: 'Flying, Toxic 1.\nMust attack each combat if able.',
+    templateText: 'Haste, Flying, Toxic 1.\nMust attack each combat if able.',
     computeStats: (turn, bracket) => {
       const count = bracket === 'b4' || turn >= 6 ? 2 : 1;
       return {
-        renderedText: `Flying, Toxic 1 (Player takes 1 poison counter if unblocked).\nMust attack each combat if able. (Swarm Count: ${count})`,
+        renderedText: `Haste, Flying, Toxic 1 (Player takes 1 poison counter if unblocked).\nMust attack each combat if able. (Swarm Count: ${count})`,
         power: 1,
         toughness: 1,
       };
@@ -238,12 +240,12 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     isPermanent: true,
     minTurn: 5,
     flavorText: 'Too huge to ignore.',
-    templateText: 'Trample, Vigilance. Must attack each combat if able.',
+    templateText: 'Haste, Trample, Vigilance. Must attack each combat if able.',
     computeStats: (turn, bracket) => {
       const bonus = bracket === 'b4' ? 4 : bracket === 'b3' ? 2 : 1;
       const stat = Math.max(5, turn + bonus);
       return {
-        renderedText: `Trample, Vigilance.\nAttacks each combat if able. (${stat}/${stat})`,
+        renderedText: `Haste, Trample, Vigilance.\nAttacks each combat if able. (${stat}/${stat})`,
         power: stat,
         toughness: stat,
       };

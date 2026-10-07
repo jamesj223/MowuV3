@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
-import { CardModal } from '@/components/cards/CardModal';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 import { ShieldAlert, Trash2, History, Sparkles } from 'lucide-react';
 
-export const BattlefieldZone: React.FC = () => {
+interface BattlefieldZoneProps {
+  onInspectCard: (card: ActivePermanent | ResolvedEvent) => void;
+}
+
+export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard }) => {
   const {
     activePermanents,
     eventHistory,
+    adjustPermanentCounters,
     dismissPermanent,
     clearAllPermanents,
     triggerEvent,
   } = useGameStore();
 
-  const [inspectedCard, setInspectedCard] = useState<ActivePermanent | ResolvedEvent | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
   return (
@@ -93,10 +96,16 @@ export const BattlefieldZone: React.FC = () => {
                   flavorText={perm.flavorText}
                   power={perm.power}
                   toughness={perm.toughness}
+                  counters={perm.counters}
                   variant="in_play"
                   showDismiss={true}
                   onDismiss={() => dismissPermanent(perm.instanceId)}
-                  onClick={() => setInspectedCard(perm)}
+                  onClick={() => onInspectCard(perm)}
+                  onCounterChange={(amount) => adjustPermanentCounters(perm.instanceId, amount)}
+                  onContextMenuAction={(action) => {
+                    if (action === 'destroy') dismissPermanent(perm.instanceId);
+                    else adjustPermanentCounters(perm.instanceId, action === 'increment' ? 1 : -1);
+                  }}
                 />
               </div>
             ))}
@@ -117,7 +126,7 @@ export const BattlefieldZone: React.FC = () => {
               {eventHistory.map((ev) => (
                 <div
                   key={ev.instanceId}
-                  onClick={() => setInspectedCard(ev)}
+                  onClick={() => onInspectCard(ev)}
                   className="flex items-center justify-between p-2 rounded-lg bg-neutral-950/60 hover:bg-neutral-800 border border-neutral-800 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -135,14 +144,6 @@ export const BattlefieldZone: React.FC = () => {
             </div>
           )}
         </div>
-      )}
-
-      {/* Full-size Card Inspection Modal */}
-      {inspectedCard && (
-        <CardModal
-          card={inspectedCard}
-          onClose={() => setInspectedCard(null)}
-        />
       )}
     </div>
   );

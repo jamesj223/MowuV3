@@ -3,15 +3,15 @@ import React, { useRef } from 'react';
 interface HoldButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onClickStep?: () => void;      // called on single click (step ±1)
   onHoldStep?: () => void;       // called repeatedly or on long press (step ±10)
-  holdDelay?: number;            // ms before repeat kicks in (default 350)
-  repeatInterval?: number;       // ms between repeat steps (default 100)
+  holdDelay?: number;            // ms before repeat kicks in (default 500)
+  repeatInterval?: number;       // ms between repeat steps (default 400)
 }
 
 export const HoldButton: React.FC<HoldButtonProps> = ({
   onClickStep,
   onHoldStep,
-  holdDelay = 350,
-  repeatInterval = 120,
+  holdDelay = 500,
+  repeatInterval = 400,
   children,
   className = '',
   disabled,

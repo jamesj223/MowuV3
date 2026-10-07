@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ManaSymbols } from './ManaSymbols';
-import { Skull, X, ZoomIn } from 'lucide-react';
+import { Minus, Plus, Skull, X, ZoomIn } from 'lucide-react';
 
 interface PlaytestCardProps {
   name: string;
@@ -11,10 +11,13 @@ interface PlaytestCardProps {
   flavorText?: string;
   power?: number | string;
   toughness?: number | string;
+  counters?: number;
   variant?: 'in_play' | 'detailed';
   size?: 'sm' | 'md' | 'lg';
   onDismiss?: () => void;
   onClick?: () => void;
+  onCounterChange?: (amount: number) => void;
+  onContextMenuAction?: (action: 'increment' | 'decrement' | 'destroy') => void;
   showDismiss?: boolean;
 }
 
@@ -27,20 +30,42 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
   flavorText,
   power,
   toughness,
+  counters = 0,
   variant = 'in_play',
   size = 'sm',
   onDismiss,
   onClick,
+  onCounterChange,
+  onContextMenuAction,
   showDismiss = false,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const isCreature = power !== undefined && toughness !== undefined;
+
+  useEffect(() => {
+    if (!contextMenuOpen) return;
+    const closeMenu = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('[data-counter-menu]')) setContextMenuOpen(false);
+    };
+    window.addEventListener('pointerdown', closeMenu);
+    return () => window.removeEventListener('pointerdown', closeMenu);
+  }, [contextMenuOpen]);
 
   // If in_play: ultra-clean, stripped down of unnecessary fluff (no flavor text, no set symbol, compact)
   if (variant === 'in_play') {
     return (
       <div
-        onClick={onClick}
+        onClick={() => {
+          setContextMenuOpen(false);
+          onClick?.();
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setContextMenuOpen(true);
+        }}
         className={`relative group rounded-xl bg-neutral-900 border border-neutral-700 hover:border-amber-400 text-neutral-900 shadow-lg select-none flex flex-col justify-between transition-all duration-150 w-38 sm:w-44 min-h-[220px] max-h-[260px] p-2 cursor-pointer hover:-translate-y-1 hover:shadow-2xl`}
         style={{
           background: 'linear-gradient(145deg, #1e222b 0%, #13161d 100%)',
@@ -89,15 +114,58 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
             </div>
           </div>
 
-          {/* P/T Box if creature */}
+          {/* P/T Box and bottom-left counter control if creature */}
           {isCreature && (
-            <div className="flex justify-end mt-1">
-              <div className="rounded bg-[#e4e0d2] border border-[#555] font-serif font-bold text-neutral-900 px-1.5 py-0.2 text-[10px] shadow-2xs">
+            <div className="flex items-center justify-end gap-1.5 mt-1">
+              <div className="flex h-5 items-center rounded bg-[#e4e0d2] border border-[#555] font-serif font-bold text-neutral-900 px-1.5 py-0.2 text-[10px] shadow-2xs">
                 {power} / {toughness}
               </div>
             </div>
           )}
         </div>
+
+        {counters > 0 && onCounterChange && (
+          <div className="absolute bottom-2 left-2 z-20 flex h-5 items-center gap-1 rounded-full border border-amber-500/40 bg-neutral-950/95 p-0.5 text-[9px] font-black text-amber-300 shadow-lg">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onCounterChange(-1);
+              }}
+              disabled={counters === 0}
+              className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-neutral-800 text-[10px] text-white hover:bg-neutral-700 disabled:opacity-30"
+              title="Remove one counter"
+            >
+              −
+            </button>
+            <span className="min-w-4 text-center font-mono">{counters}</span>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onCounterChange(1);
+              }}
+              className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[10px] text-neutral-950 hover:bg-amber-400"
+              title="Add one counter"
+            >
+              +
+            </button>
+          </div>
+        )}
+
+        {contextMenuOpen && onContextMenuAction && (
+          <div data-counter-menu className="absolute bottom-2 left-2 z-30 min-w-44 rounded-xl border border-neutral-700 bg-neutral-950 p-1.5 text-xs text-neutral-200 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => { onContextMenuAction('increment'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-neutral-800">
+              <Plus className="w-3 w-3" /> Add counter
+            </button>
+            <button type="button" onClick={() => { onContextMenuAction('decrement'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-neutral-800">
+              <Minus className="w-3 h-3" /> Remove counter
+            </button>
+            <button type="button" onClick={() => { onContextMenuAction('destroy'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-rose-400 hover:bg-rose-950/50">
+              <Skull className="w-3 h-3" /> Destroy
+            </button>
+          </div>
+        )}
 
         {/* Dismiss / Destroy Button */}
         {showDismiss && onDismiss && (

@@ -6,7 +6,6 @@ import { Shield, Biohazard, Crown } from 'lucide-react';
 export const DamageTracker: React.FC = () => {
   const {
     opponentHealth,
-    startingOpponentHealth,
     totalDamageDealt,
     accumulatedDelta,
     isDeltaVisible,
@@ -22,11 +21,6 @@ export const DamageTracker: React.FC = () => {
     toggleTrackOpponentCommanderDamage,
     isGameOver,
   } = useGameStore();
-
-  const healthPercent = Math.max(
-    0,
-    Math.min(100, Math.round((opponentHealth / startingOpponentHealth) * 100))
-  );
 
   return (
     <div className="flex flex-col bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm gap-3">
@@ -46,105 +40,74 @@ export const DamageTracker: React.FC = () => {
           </div>
         </div>
 
-        {/* Debounced Floating Delta Indicator */}
-        <div
-          className={`transition-all duration-300 font-mono font-bold text-base px-2.5 py-0.5 rounded-full border shadow-md ${
-            isDeltaVisible && accumulatedDelta !== 0
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-90 pointer-events-none'
-          } ${
-            accumulatedDelta < 0
-              ? 'bg-rose-500/20 text-rose-400 border-rose-500/50'
-              : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-          }`}
-        >
-          {accumulatedDelta > 0 ? `+${accumulatedDelta}` : accumulatedDelta}
+        <div className="flex items-center gap-1 text-[10px]">
+          <button
+            onClick={toggleTrackOpponentPoison}
+            className={`px-1.5 py-0.5 rounded border transition-colors cursor-pointer flex items-center gap-1 ${
+              trackOpponentPoison
+                ? 'bg-lime-500/20 text-lime-400 border-lime-500/40'
+                : 'text-neutral-500 border-transparent hover:text-neutral-300'
+            }`}
+            title="Toggle opponent poison counter"
+          >
+            <Biohazard className="w-3 h-3" />
+            Infect
+          </button>
+          <button
+            onClick={toggleTrackOpponentCommanderDamage}
+            className={`px-1.5 py-0.5 rounded border transition-colors cursor-pointer flex items-center gap-1 ${
+              trackOpponentCommanderDamage
+                ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                : 'text-neutral-500 border-transparent hover:text-neutral-300'
+            }`}
+            title="Toggle opponent commander damage"
+          >
+            <Crown className="w-3 h-3" />
+            Cmdr
+          </button>
         </div>
       </div>
 
-      {/* Compact Primary Life Readout */}
-      <div className="py-2 flex flex-col items-center justify-center text-center">
-        <div className="flex items-baseline justify-center gap-2">
-          <span
-            className={`text-5xl font-black font-mono tracking-tight drop-shadow-md transition-colors ${
-              opponentHealth === 0
-                ? 'text-emerald-400 animate-pulse'
-                : opponentHealth <= 20
-                ? 'text-amber-400'
-                : 'text-white'
+      {/* Compact +/- Controls: Click = +/-1, hold = +/-10 */}
+      <div className="flex items-center justify-between rounded-xl bg-neutral-950/60 p-2.5 border border-neutral-800">
+        <div className="flex items-end gap-2">
+          <div>
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500">Life Total</span>
+            <span className="text-2xl font-black font-mono text-white">{opponentHealth}</span>
+          </div>
+          <div
+            className={`mb-1 rounded-full border px-1.5 py-0.5 font-mono text-[10px] font-bold shadow-md transition-all duration-300 ${
+              isDeltaVisible && accumulatedDelta !== 0
+                ? 'scale-100 opacity-100'
+                : 'scale-90 opacity-0'
+            } ${
+              accumulatedDelta < 0
+                ? 'border-rose-500/50 bg-rose-500/20 text-rose-400'
+                : 'border-emerald-500/50 bg-emerald-500/20 text-emerald-400'
             }`}
           >
-            {opponentHealth}
-          </span>
-          <span className="text-base font-mono text-neutral-500">
-            / {startingOpponentHealth}
-          </span>
+            {accumulatedDelta > 0 ? `+${accumulatedDelta}` : accumulatedDelta}
+          </div>
         </div>
-
-        {/* Health Progress Line */}
-        <div className="w-full mt-2 bg-neutral-950 h-2 rounded-full overflow-hidden border border-neutral-800">
-          <div
-            className={`h-full transition-all duration-200 rounded-full ${
-              healthPercent <= 20
-                ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
-                : healthPercent <= 50
-                ? 'bg-amber-500'
-                : 'bg-emerald-500'
-            }`}
-            style={{ width: `${healthPercent}%` }}
-          />
+        <div className="flex items-center gap-1.5">
+          <HoldButton
+            onClickStep={() => applyDamageToOpponent(1)}
+            onHoldStep={() => applyDamageToOpponent(10)}
+            disabled={isGameOver}
+            className="w-8 h-8 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 disabled:opacity-30 text-rose-300 font-mono font-bold text-sm border border-rose-800/50 hover:border-rose-500 flex items-center justify-center"
+            title="Click: -1 damage • Hold: -10 damage"
+          >
+            -
+          </HoldButton>
+          <HoldButton
+            onClickStep={() => applyOpponentHealthChange(1)}
+            onHoldStep={() => applyOpponentHealthChange(10)}
+            className="w-8 h-8 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 font-mono font-bold text-sm border border-emerald-800/50 hover:border-emerald-500 flex items-center justify-center"
+            title="Click: +1 life • Hold: +10 life"
+          >
+            +
+          </HoldButton>
         </div>
-      </div>
-
-      {/* Streamlined Controls: Clean -1 and +1 with Hold-to-repeat / Long press for 10 */}
-      <div className="grid grid-cols-2 gap-2 pt-1">
-        <HoldButton
-          onClickStep={() => applyDamageToOpponent(1)}
-          onHoldStep={() => applyDamageToOpponent(10)}
-          disabled={isGameOver}
-          className="py-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 disabled:opacity-30 text-rose-300 font-mono font-bold text-sm border border-rose-800/50 hover:border-rose-500 flex flex-col items-center justify-center"
-          title="Click: -1 damage • Hold: -10 damage"
-        >
-          <span className="text-sm font-extrabold">-1 Damage</span>
-          <span className="text-[9px] text-rose-400/60 font-sans font-normal">(Hold for -10)</span>
-        </HoldButton>
-
-        <HoldButton
-          onClickStep={() => applyOpponentHealthChange(1)}
-          onHoldStep={() => applyOpponentHealthChange(10)}
-          className="py-2.5 rounded-xl bg-neutral-850 hover:bg-neutral-800 text-emerald-300 font-mono font-bold text-sm border border-neutral-700 hover:border-emerald-500/50 flex flex-col items-center justify-center"
-          title="Click: +1 life • Hold: +10 life"
-        >
-          <span className="text-sm font-extrabold">+1 Heal</span>
-          <span className="text-[9px] text-emerald-400/60 font-sans font-normal">(Hold for +10)</span>
-        </HoldButton>
-      </div>
-
-      {/* Alt-Win Toggles */}
-      <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-[10px]">
-        <button
-          onClick={toggleTrackOpponentPoison}
-          className={`px-2 py-0.5 rounded font-medium border cursor-pointer transition-colors flex items-center gap-1 ${
-            trackOpponentPoison
-              ? 'bg-lime-500/20 text-lime-400 border-lime-500/40'
-              : 'bg-neutral-850 text-neutral-500 border-neutral-800 hover:text-neutral-300'
-          }`}
-        >
-          <Biohazard className="w-3 h-3" />
-          <span>Infect</span>
-        </button>
-
-        <button
-          onClick={toggleTrackOpponentCommanderDamage}
-          className={`px-2 py-0.5 rounded font-medium border cursor-pointer transition-colors flex items-center gap-1 ${
-            trackOpponentCommanderDamage
-              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-              : 'bg-neutral-850 text-neutral-500 border-neutral-800 hover:text-neutral-300'
-          }`}
-        >
-          <Crown className="w-3 h-3" />
-          <span>Cmdr</span>
-        </button>
       </div>
 
       {/* 3 Opponents Poison Track (If Toggled On) */}

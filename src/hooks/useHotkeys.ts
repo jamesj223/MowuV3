@@ -38,7 +38,7 @@ export const useHotkeys = ({
 
       const key = e.key.toLowerCase();
 
-      // Escape key closes modals or opens settings
+      // Escape closes any open modal; Space/Enter follows the same modal policy.
       if (e.key === 'Escape') {
         if (currentDrawnCard) {
           closeDrawnCard();
@@ -52,10 +52,10 @@ export const useHotkeys = ({
         return;
       }
 
-      // Space / Enter dismisses drawn card if open
-      if (currentDrawnCard && (e.key === ' ' || e.key === 'Enter')) {
+      if (hasOpenModal && (e.key === ' ' || e.key === 'Enter')) {
         e.preventDefault();
-        closeDrawnCard();
+        if (currentDrawnCard) closeDrawnCard();
+        else onCloseAnyModal();
         return;
       }
 

@@ -13,14 +13,14 @@ export const CardModal: React.FC<CardModalProps> = ({ card, onClose, isNewDraw =
   if (!card) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        className="relative flex flex-col items-center max-w-lg w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200">
+      <button
+        type="button"
+        aria-label="Close card details"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+      />
+      <div className="relative z-10 flex w-full max-w-lg flex-col items-center">
         {/* Draw announcement banner if drawn on turn */}
         {isNewDraw && (
           <div className="flex items-center gap-2 mb-3 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-medium text-sm shadow-lg animate-bounce">

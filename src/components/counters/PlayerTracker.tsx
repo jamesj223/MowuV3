@@ -37,24 +37,26 @@ export const PlayerTracker: React.FC = () => {
         <div className="flex items-center gap-1 text-[10px]">
           <button
             onClick={toggleTrackPlayerPoison}
-            className={`px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+            className={`px-1.5 py-0.5 rounded border transition-colors cursor-pointer flex items-center gap-1 ${
               trackPlayerPoison
                 ? 'bg-lime-500/20 text-lime-400 border-lime-500/40'
                 : 'text-neutral-500 border-transparent hover:text-neutral-300'
             }`}
             title="Toggle player poison counter"
           >
+            <Biohazard className="w-3 h-3" />
             Poison
           </button>
           <button
             onClick={toggleTrackPlayerCommanderDamage}
-            className={`px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+            className={`px-1.5 py-0.5 rounded border transition-colors cursor-pointer flex items-center gap-1 ${
               trackPlayerCommanderDamage
                 ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
                 : 'text-neutral-500 border-transparent hover:text-neutral-300'
             }`}
             title="Toggle commander damage taken"
           >
+            <Crown className="w-3 h-3" />
             Cmdr
           </button>
         </div>

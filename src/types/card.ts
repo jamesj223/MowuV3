@@ -20,6 +20,7 @@ export interface EventCardDefinition {
   flavorText?: string;
   basePower?: number;
   baseToughness?: number;
+  initialCounters?: number;
   templateText: string;
   // Scaler computes dynamic card text and stats given current turn & Commander bracket
   computeStats: (turn: number, bracket: CommanderBracket) => {
@@ -41,6 +42,7 @@ export interface ActivePermanent {
   flavorText?: string;
   power?: number;
   toughness?: number;
+  counters: number;
   turnPlayed: number;
 }
 

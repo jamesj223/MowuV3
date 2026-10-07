@@ -12,6 +12,7 @@ import { StatsModal } from '@/components/stats/StatsModal';
 import { HelpModal } from '@/components/ui/HelpModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
 import { Keyboard } from 'lucide-react';
+import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 
 export const App: React.FC = () => {
   const {
@@ -24,15 +25,21 @@ export const App: React.FC = () => {
   const [isNewGameOpen, setIsNewGameOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [inspectedCard, setInspectedCard] = useState<ActivePermanent | ResolvedEvent | null>(null);
 
   const hasOpenModal =
-    isNewGameOpen || isStatsOpen || isHelpOpen || Boolean(currentDrawnCard);
+    isNewGameOpen ||
+    isStatsOpen ||
+    isHelpOpen ||
+    Boolean(currentDrawnCard) ||
+    Boolean(inspectedCard);
 
   const handleCloseAnyModal = () => {
     setIsNewGameOpen(false);
     setIsStatsOpen(false);
     setIsHelpOpen(false);
     closeDrawnCard();
+    setInspectedCard(null);
   };
 
   useHotkeys({
@@ -55,20 +62,20 @@ export const App: React.FC = () => {
       {/* Main Expansive Cockpit: Widescreen-optimized flex layout */}
       <main className="flex-grow w-full max-w-[1850px] mx-auto p-3 sm:p-5">
         <div className="flex flex-col lg:flex-row gap-4 items-stretch">
-          {/* Left Wing: Opponent Life & Alt-Win Trackers (Slim 280-320px dock) */}
-          <div className="w-full lg:w-72 xl:w-80 shrink-0 flex flex-col">
-            <DamageTracker />
+          {/* Left Wing: Turn & Player Status (Slim 280-320px dock) */}
+          <div className="w-full lg:w-72 xl:w-80 shrink-0 flex flex-col space-y-4">
+            <TurnCounter />
+            <PlayerTracker />
           </div>
 
           {/* Center Stage: The Opponent Battlefield (Takes all remaining width, 70%+ of screen!) */}
           <div className="flex-1 min-w-0 flex flex-col">
-            <BattlefieldZone />
+            <BattlefieldZone onInspectCard={setInspectedCard} />
           </div>
 
-          {/* Right Wing: Turn & Player Status (Slim 280-320px dock) */}
-          <div className="w-full lg:w-72 xl:w-80 shrink-0 flex flex-col space-y-4">
-            <TurnCounter />
-            <PlayerTracker />
+          {/* Right Wing: Opponent Life & Alt-Win Trackers (Slim 280-320px dock) */}
+          <div className="w-full lg:w-72 xl:w-80 shrink-0 flex flex-col">
+            <DamageTracker />
           </div>
         </div>
       </main>
@@ -127,6 +134,11 @@ export const App: React.FC = () => {
         card={currentDrawnCard}
         onClose={closeDrawnCard}
         isNewDraw={true}
+      />
+
+      <CardModal
+        card={inspectedCard}
+        onClose={() => setInspectedCard(null)}
       />
 
       <GameOverModal
