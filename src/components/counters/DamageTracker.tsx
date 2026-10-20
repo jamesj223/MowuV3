@@ -20,6 +20,7 @@ export const DamageTracker: React.FC = () => {
     toggleTrackOpponentPoison,
     toggleTrackOpponentCommanderDamage,
     isGameOver,
+    opponentCommander,
   } = useGameStore();
 
   return (
@@ -28,14 +29,22 @@ export const DamageTracker: React.FC = () => {
       <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
         <div className="flex items-center gap-1.5">
           <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            <Shield className="w-4 h-4" />
+            {opponentCommander ? (
+              <span className="text-sm leading-none">{opponentCommander.avatar}</span>
+            ) : (
+              <Shield className="w-4 h-4" />
+            )}
           </div>
           <div>
             <h2 className="text-xs font-bold tracking-wide text-neutral-300 uppercase">
-              Opponent Life
+              {opponentCommander ? opponentCommander.name : 'Opponent Life'}
             </h2>
             <p className="text-[10px] text-neutral-500">
-              Total Dmg: <span className="font-mono text-neutral-400">{totalDamageDealt}</span>
+              {opponentCommander ? (
+                <span>{opponentCommander.archetype} • Dmg: <span className="font-mono text-neutral-400">{totalDamageDealt}</span></span>
+              ) : (
+                <span>Total Dmg: <span className="font-mono text-neutral-400">{totalDamageDealt}</span></span>
+              )}
             </p>
           </div>
         </div>

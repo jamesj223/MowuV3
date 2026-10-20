@@ -4,7 +4,9 @@ import confetti from 'canvas-confetti';
 import type { CommanderBracket, GameSettings, TurnSnapshot } from '@/types/game';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
+import type { MowuCommander, OpponentTurnState, AttackingCreature } from '@/types/opponent';
 import { EVENT_CARDS } from '@/data/cards';
+import { pickRandomCommander, pickIdleText } from '@/data/commanders';
 
 interface GameStoreState {
   // Settings
@@ -38,7 +40,12 @@ interface GameStoreState {
 
   // Live Turn State
   turn: number;
+  turnPhase: 'player' | 'opponent';
   turnSnapshots: TurnSnapshot[];
+
+  // Opponent Turn System
+  opponentCommander: MowuCommander | null;
+  opponentTurnState: OpponentTurnState | null;
 
   // Player Counters
   playerLife: number;
@@ -57,6 +64,8 @@ interface GameStoreState {
   adjustOpponentCommanderDamage: (index: 0 | 1 | 2, amount: number) => void;
   nextTurn: () => void;
   prevTurn: () => void;
+  endOpponentTurn: () => void;
+  advanceOpponentPhase: () => void;
   adjustPlayerLife: (amount: number) => void;
   adjustPoison: (amount: number) => void;
   adjustCommanderDamage: (amount: number) => void;
@@ -91,6 +100,65 @@ const checkVictory = (
   return { isWon: false, reason: null };
 };
 
+/**
+ * Extract attacking creatures from active permanents.
+ * A creature attacks if it has power > 0 and does NOT have the Defender keyword.
+ */
+const getAttackers = (permanents: ActivePermanent[]): AttackingCreature[] => {
+  return permanents
+    .filter((p) => {
+      if (p.power === undefined || p.power <= 0) return false;
+      const text = p.renderedText.toLowerCase();
+      return !text.includes('defender');
+    })
+    .map((p) => ({
+      instanceId: p.instanceId,
+      name: p.name,
+      power: p.power ?? 0,
+      toughness: p.toughness ?? 0,
+      keywords: extractKeywords(p.renderedText),
+    }));
+};
+
+/**
+ * Extract keyword abilities from card rules text for display.
+ */
+const extractKeywords = (text: string): string => {
+  const keywords = ['Haste', 'Trample', 'Flying', 'Vigilance', 'Deathtouch', 'Reach', 'Toxic', 'Lifelink', 'First Strike', 'Double Strike', 'Menace'];
+  const found = keywords.filter((kw) => text.toLowerCase().includes(kw.toLowerCase()));
+  return found.join(', ');
+};
+
+/**
+ * Compute what the opponent does on their turn.
+ */
+const computeOpponentTurn = (
+  state: GameStoreState,
+): OpponentTurnState => {
+  const bracketConfig = COMMANDER_BRACKETS[state.bracket];
+  const freq = state.bracket === 'custom' ? state.customEventFrequency : bracketConfig.eventFrequency;
+  const hasEvent = freq > 0 && state.turn % freq === 0;
+  const attackers = getAttackers(state.activePermanents);
+
+  // Determine starting phase
+  let phase: OpponentTurnState['phase'] = 'idle';
+  if (hasEvent) {
+    phase = 'event';
+  } else if (attackers.length > 0) {
+    phase = 'combat';
+  }
+
+  const commander = state.opponentCommander ?? pickRandomCommander(state.bracket);
+
+  return {
+    phase,
+    hasEvent,
+    attackers,
+    idleText: (!hasEvent && attackers.length === 0) ? pickIdleText(commander) : null,
+    eventTriggered: false,
+  };
+};
+
 export const useGameStore = create<GameStoreState>()(
   persist(
     (set, get) => ({
@@ -120,7 +188,12 @@ export const useGameStore = create<GameStoreState>()(
       deltaTimerId: null,
 
       turn: 1,
+      turnPhase: 'player',
       turnSnapshots: [{ turn: 1, damageThisTurn: 0, opponentHealth: 120, totalDamage: 0, timestamp: Date.now() }],
+
+      // Opponent Turn System
+      opponentCommander: pickRandomCommander('b2'),
+      opponentTurnState: null,
 
       playerLife: 40,
       poisonCounters: 0,
@@ -249,6 +322,58 @@ export const useGameStore = create<GameStoreState>()(
         const state = get();
         if (state.isGameOver) return;
 
+        // If we're in player phase, transition to opponent phase
+        if (state.turnPhase === 'player') {
+          // Compute what the opponent will do
+          const oppTurn = computeOpponentTurn(state);
+
+          // If bracket is 'off' or there's truly nothing to show, skip opponent turn entirely
+          if (state.bracket === 'off' && oppTurn.attackers.length === 0) {
+            // Skip straight to next turn like before
+            const nextTurnNum = state.turn + 1;
+            const snapshots = [
+              ...state.turnSnapshots,
+              {
+                turn: nextTurnNum,
+                damageThisTurn: 0,
+                opponentHealth: state.opponentHealth,
+                totalDamage: state.totalDamageDealt,
+                timestamp: Date.now(),
+              },
+            ];
+            set({
+              turn: nextTurnNum,
+              accumulatedDelta: 0,
+              isDeltaVisible: false,
+              turnSnapshots: snapshots,
+            });
+            return;
+          }
+
+          // Enter opponent turn
+          set({
+            turnPhase: 'opponent',
+            opponentTurnState: oppTurn,
+          });
+
+          // If it's an event turn, trigger the event immediately
+          if (oppTurn.hasEvent) {
+            get().triggerEvent();
+            set((current) => ({
+              opponentTurnState: current.opponentTurnState
+                ? { ...current.opponentTurnState, eventTriggered: true }
+                : null,
+            }));
+          }
+          return;
+        }
+
+        // If we're somehow called during opponent phase, end it
+        get().endOpponentTurn();
+      },
+
+      endOpponentTurn: () => {
+        const state = get();
         const nextTurnNum = state.turn + 1;
         const snapshots = [
           ...state.turnSnapshots,
@@ -263,17 +388,54 @@ export const useGameStore = create<GameStoreState>()(
 
         set({
           turn: nextTurnNum,
+          turnPhase: 'player',
+          opponentTurnState: null,
           accumulatedDelta: 0,
           isDeltaVisible: false,
           turnSnapshots: snapshots,
         });
+      },
 
-        const bracketConfig = COMMANDER_BRACKETS[state.bracket];
-        const freq = state.bracket === 'custom' ? state.customEventFrequency : bracketConfig.eventFrequency;
+      advanceOpponentPhase: () => {
+        const state = get();
+        if (!state.opponentTurnState) return;
 
-        if (freq > 0 && nextTurnNum % freq === 0) {
-          get().triggerEvent();
+        const { phase, hasEvent } = state.opponentTurnState;
+
+        if (phase === 'event') {
+          // Re-evaluate attackers now that the event card has resolved (in case creature with haste was played)
+          const currentAttackers = getAttackers(state.activePermanents);
+          if (currentAttackers.length > 0) {
+            set({
+              opponentTurnState: {
+                ...state.opponentTurnState,
+                phase: 'combat',
+                attackers: currentAttackers,
+              },
+              currentDrawnCard: null,
+            });
+          } else {
+            // Nothing else to do — show idle text or pass
+            const commander = state.opponentCommander ?? pickRandomCommander(state.bracket);
+            const idleText = pickIdleText(commander);
+            set({
+              opponentTurnState: { ...state.opponentTurnState, phase: 'idle', idleText },
+              currentDrawnCard: null,
+            });
+          }
+          return;
         }
+
+        if (phase === 'combat') {
+          // Combat completed
+          set({
+            opponentTurnState: { ...state.opponentTurnState, phase: 'complete' },
+          });
+          return;
+        }
+
+        // idle or complete → end the opponent turn
+        get().endOpponentTurn();
       },
 
       prevTurn: () => {
@@ -323,9 +485,30 @@ export const useGameStore = create<GameStoreState>()(
         let eligible = EVENT_CARDS.filter((c) => (c.minTurn ?? 1) <= state.turn);
         if (eligible.length === 0) eligible = EVENT_CARDS;
 
-        const cardDef = forceCardId
-          ? EVENT_CARDS.find((c) => c.id === forceCardId) || eligible[0]
-          : eligible[Math.floor(Math.random() * eligible.length)];
+        let cardDef;
+        if (forceCardId) {
+          cardDef = EVENT_CARDS.find((c) => c.id === forceCardId) || eligible[0];
+        } else {
+          // Apply commander card weights if a commander is active
+          const commander = state.opponentCommander;
+          if (commander && Object.keys(commander.cardWeights).length > 0) {
+            // Weighted random selection
+            const weights = eligible.map((c) => commander.cardWeights[c.category] ?? 1.0);
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            let roll = Math.random() * totalWeight;
+            let idx = 0;
+            for (let i = 0; i < weights.length; i++) {
+              roll -= weights[i];
+              if (roll <= 0) {
+                idx = i;
+                break;
+              }
+            }
+            cardDef = eligible[idx];
+          } else {
+            cardDef = eligible[Math.floor(Math.random() * eligible.length)];
+          }
+        }
 
         const computed = cardDef.computeStats(state.turn, state.bracket);
         const instanceId = `inst-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -379,8 +562,12 @@ export const useGameStore = create<GameStoreState>()(
         const state = get();
         if (state.deltaTimerId) clearTimeout(state.deltaTimerId);
 
+        // Pick a new commander for the current bracket
+        const commander = pickRandomCommander(state.bracket);
+
         set({
           turn: 1,
+          turnPhase: 'player',
           opponentHealth: state.startingOpponentHealth,
           totalDamageDealt: 0,
           accumulatedDelta: 0,
@@ -397,6 +584,8 @@ export const useGameStore = create<GameStoreState>()(
           activePermanents: [],
           eventHistory: [],
           currentDrawnCard: null,
+          opponentCommander: commander,
+          opponentTurnState: null,
           turnSnapshots: [
             {
               turn: 1,
@@ -419,6 +608,9 @@ export const useGameStore = create<GameStoreState>()(
         const customFreq = settings.customEventFrequency ?? state.customEventFrequency;
         const deck = settings.deckName ?? state.currentDeckName;
 
+        // Pick a commander for the new bracket
+        const commander = pickRandomCommander(bracket);
+
         set({
           startingOpponentHealth: startHealth,
           startingPlayerLife: playerLife,
@@ -431,6 +623,7 @@ export const useGameStore = create<GameStoreState>()(
           trackOpponentCommanderDamage: settings.trackOpponentCommanderDamage ?? state.trackOpponentCommanderDamage,
           currentDeckName: deck,
           turn: 1,
+          turnPhase: 'player',
           opponentHealth: startHealth,
           totalDamageDealt: 0,
           accumulatedDelta: 0,
@@ -448,6 +641,8 @@ export const useGameStore = create<GameStoreState>()(
           activePermanents: [],
           eventHistory: [],
           currentDrawnCard: null,
+          opponentCommander: commander,
+          opponentTurnState: null,
           turnSnapshots: [
             {
               turn: 1,
@@ -493,6 +688,7 @@ export const useGameStore = create<GameStoreState>()(
         trackOpponentPoison: state.trackOpponentPoison,
         trackOpponentCommanderDamage: state.trackOpponentCommanderDamage,
         currentDeckName: state.currentDeckName,
+        opponentCommander: state.opponentCommander,
       }),
     }
   )

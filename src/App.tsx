@@ -11,6 +11,7 @@ import { NewGameModal } from '@/components/ui/NewGameModal';
 import { StatsModal } from '@/components/stats/StatsModal';
 import { HelpModal } from '@/components/ui/HelpModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
+import { OpponentTurnModal } from '@/components/ui/OpponentTurnModal';
 import { Keyboard } from 'lucide-react';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 
@@ -20,6 +21,8 @@ export const App: React.FC = () => {
     currentDrawnCard,
     closeDrawnCard,
     resetGame,
+    opponentTurnState,
+    turnPhase,
   } = useGameStore();
 
   const [isNewGameOpen, setIsNewGameOpen] = useState(false);
@@ -27,12 +30,15 @@ export const App: React.FC = () => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [inspectedCard, setInspectedCard] = useState<ActivePermanent | ResolvedEvent | null>(null);
 
+  const isOpponentTurnActive = turnPhase === 'opponent' && opponentTurnState !== null;
+
   const hasOpenModal =
     isNewGameOpen ||
     isStatsOpen ||
     isHelpOpen ||
     Boolean(currentDrawnCard) ||
-    Boolean(inspectedCard);
+    Boolean(inspectedCard) ||
+    isOpponentTurnActive;
 
   const handleCloseAnyModal = () => {
     setIsNewGameOpen(false);
@@ -130,16 +136,22 @@ export const App: React.FC = () => {
       </footer>
 
       {/* Modals */}
-      <CardModal
-        card={currentDrawnCard}
-        onClose={closeDrawnCard}
-        isNewDraw={true}
-      />
+      {/* Only show the standalone CardModal when NOT in opponent turn (opponent turn modal handles its own card display) */}
+      {!isOpponentTurnActive && (
+        <CardModal
+          card={currentDrawnCard}
+          onClose={closeDrawnCard}
+          isNewDraw={true}
+        />
+      )}
 
       <CardModal
         card={inspectedCard}
         onClose={() => setInspectedCard(null)}
       />
+
+      {/* Opponent Turn Modal */}
+      <OpponentTurnModal />
 
       <GameOverModal
         isOpen={isGameOver}

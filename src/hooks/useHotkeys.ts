@@ -23,6 +23,10 @@ export const useHotkeys = ({
     resetGame,
     currentDrawnCard,
     closeDrawnCard,
+    turnPhase,
+    opponentTurnState,
+    advanceOpponentPhase,
+    endOpponentTurn,
   } = useGameStore();
 
   useEffect(() => {
@@ -37,9 +41,22 @@ export const useHotkeys = ({
       }
 
       const key = e.key.toLowerCase();
+      const isOpponentTurn = turnPhase === 'opponent' && opponentTurnState !== null;
 
       // Escape closes any open modal; Space/Enter follows the same modal policy.
       if (e.key === 'Escape') {
+        if (isOpponentTurn) {
+          // During opponent turn, Escape advances through phases
+          if (currentDrawnCard) {
+            closeDrawnCard();
+            advanceOpponentPhase();
+          } else if (opponentTurnState.phase === 'idle' || opponentTurnState.phase === 'complete') {
+            endOpponentTurn();
+          } else {
+            advanceOpponentPhase();
+          }
+          return;
+        }
         if (currentDrawnCard) {
           closeDrawnCard();
           return;
@@ -49,6 +66,20 @@ export const useHotkeys = ({
           return;
         }
         onOpenSettings();
+        return;
+      }
+
+      // Space/Enter during opponent turn advances through phases
+      if (isOpponentTurn && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault();
+        if (currentDrawnCard && opponentTurnState.phase === 'event') {
+          closeDrawnCard();
+          advanceOpponentPhase();
+        } else if (opponentTurnState.phase === 'idle' || opponentTurnState.phase === 'complete') {
+          endOpponentTurn();
+        } else {
+          advanceOpponentPhase();
+        }
         return;
       }
 
@@ -120,6 +151,10 @@ export const useHotkeys = ({
     resetGame,
     currentDrawnCard,
     closeDrawnCard,
+    turnPhase,
+    opponentTurnState,
+    advanceOpponentPhase,
+    endOpponentTurn,
     onOpenHelp,
     onOpenSettings,
     onOpenStats,

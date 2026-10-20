@@ -3,6 +3,7 @@ import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import type { CommanderBracket } from '@/types/game';
 import { COMMANDER_BRACKETS } from '@/types/game';
+import { MOWU_COMMANDERS } from '@/data/commanders';
 import { X, Play, Settings } from 'lucide-react';
 
 interface NewGameModalProps {
@@ -180,6 +181,28 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
                   className="w-16 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-700 text-white font-mono text-xs text-center"
                 />
                 <span className="text-xs text-neutral-400">turns</span>
+              </div>
+            )}
+
+            {/* Possible Mowu Commanders for selected bracket */}
+            {selectedBracket !== 'off' && selectedBracket !== 'custom' && (
+              <div className="mt-2.5 p-2.5 rounded-xl bg-neutral-950/70 border border-neutral-800 text-[11px]">
+                <span className="text-neutral-500 uppercase tracking-wider text-[10px] block font-bold mb-1">
+                  Possible Opponent Commanders:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {MOWU_COMMANDERS.filter((c) => c.brackets.includes(selectedBracket)).map((c) => (
+                    <span
+                      key={c.id}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium text-[11px]"
+                      title={`${c.title} • ${c.archetype}: ${c.flavour}`}
+                    >
+                      <span>{c.avatar}</span>
+                      <span>{c.name}</span>
+                      <span className="text-[10px] text-neutral-500 font-mono">({c.archetype})</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>

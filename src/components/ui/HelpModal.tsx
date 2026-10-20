@@ -97,6 +97,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <li><strong className="text-rose-400">Bracket 4 (cEDH)</strong>: 3–5 turn goal, brutal stax & fast clocks.</li>
             </ul>
 
+            <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
+              <strong className="text-amber-400 block mb-1">🐕 Opponent Turn System & Commanders</strong>
+              Each turn alternates between your turn and an Opponent turn. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
+            </div>
+
             <p className="text-xs text-neutral-500 mt-3">
               Custom MS Paint card artwork can be added directly to{' '}
               <code className="text-neutral-400 bg-neutral-800 px-1 py-0.5 rounded font-mono">
