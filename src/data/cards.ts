@@ -5,8 +5,9 @@ const getBracketMultiplier = (bracket: CommanderBracket): number => {
   switch (bracket) {
     case 'b1': return 0.75;
     case 'b2': return 1.0;
-    case 'b3': return 1.35;
-    case 'b4': return 1.75;
+    case 'b3': return 1.25;
+    case 'b4': return 1.6;
+    case 'b5': return 2.0;
     default: return 1.0;
   }
 };
@@ -32,9 +33,47 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     },
   },
   {
+    id: 'generic-chump-blocker',
+    name: 'Generic Chump Blocker',
+    manaCost: '{W}',
+    typeLine: 'Creature — Citizen Token',
+    artFile: 'chump-blocker.png',
+    category: 'creature',
+    isPermanent: true,
+    minTurn: 1,
+    basePower: 1,
+    baseToughness: 1,
+    flavorText: '"I volunteered for guard duty, but nobody mentioned giant dragons."',
+    templateText: 'Defender.\nMust block your highest power attacker if able.',
+    computeStats: () => ({
+      renderedText: 'Defender.\nMust block your highest power attacker if able.',
+      power: 1,
+      toughness: 1,
+    }),
+  },
+  {
+    id: 'hardy-chump-blocker',
+    name: 'Hardy Shield Bearer',
+    manaCost: '{1}{W}',
+    typeLine: 'Creature — Dwarf Soldier Token',
+    artFile: 'chump-blocker.png',
+    category: 'creature',
+    isPermanent: true,
+    minTurn: 2,
+    basePower: 0,
+    baseToughness: 5,
+    flavorText: '"Hold the line! He can barely scratch this granite shield."',
+    templateText: 'Defender, Reach.\nMust block your highest power attacker if able.',
+    computeStats: () => ({
+      renderedText: 'Defender, Reach.\nMust block your highest power attacker if able.',
+      power: 0,
+      toughness: 5,
+    }),
+  },
+  {
     id: 'slippery-chump-blocker',
     name: 'Slippery Chump Blocker',
-    manaCost: '{G}',
+    manaCost: '{1}{U}',
     typeLine: 'Creature — Frog Rogue Token',
     artFile: 'chump-blocker.png',
     category: 'creature',
@@ -42,10 +81,86 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     minTurn: 1,
     basePower: 1,
     baseToughness: 2,
-    flavorText: 'It hops in the way of your attacks whether it wants to or not.',
-    templateText: 'Defender, Reach, Deathtouch.\nThis creature must block your highest power attacker if able.',
+    flavorText: 'It hops in the way of your attacks, strikes first, and slips away.',
+    templateText: 'Defender, Reach, First Strike.\nMust block if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Reach, Deathtouch.\nThis creature must block your highest power attacker if able.',
+      renderedText: 'Defender, Reach, First Strike.\nMust block if able.',
+      power: 1,
+      toughness: 2,
+    }),
+  },
+  {
+    id: 'deadly-chump-blocker',
+    name: 'Deadly Chump Blocker',
+    manaCost: '{B}',
+    typeLine: 'Creature — Snake Assassin Token',
+    artFile: 'chump-blocker.png',
+    category: 'creature',
+    isPermanent: true,
+    minTurn: 2,
+    basePower: 1,
+    baseToughness: 1,
+    flavorText: 'A tiny drop of venom is all it takes to bring down a colossus.',
+    templateText: 'Defender, Deathtouch.\nMust block your highest power attacker if able.',
+    computeStats: () => ({
+      renderedText: 'Defender, Deathtouch.\nMust block your highest power attacker if able.',
+      power: 1,
+      toughness: 1,
+    }),
+  },
+  {
+    id: 'contaminated-chump-blocker',
+    name: 'Contaminated Blocker',
+    manaCost: '{B}{G}',
+    typeLine: 'Creature — Phyrexian Insect Token',
+    artFile: 'chump-blocker.png',
+    category: 'creature',
+    isPermanent: true,
+    minTurn: 2,
+    basePower: 1,
+    baseToughness: 1,
+    flavorText: 'Its toxic ichor leaves a lingering stain on anything it touches.',
+    templateText: 'Defender, Toxic 1.\nWhen this creature dies from blocking, you get 1 poison counter.',
+    computeStats: () => ({
+      renderedText: 'Defender, Toxic 1.\nWhen this creature dies from blocking, you get 1 poison counter.',
+      power: 1,
+      toughness: 1,
+    }),
+  },
+  {
+    id: 'indecisive-chump-blocker',
+    name: 'Indecisive Chump Blocker',
+    manaCost: '{1}{R}',
+    typeLine: 'Creature — Goblin Scout Token',
+    artFile: 'chump-blocker.png',
+    category: 'creature',
+    isPermanent: true,
+    minTurn: 2,
+    basePower: 1,
+    baseToughness: 2,
+    flavorText: '"Wait, do I jump left or jump right? AAAAH!"',
+    templateText: 'Defender.\nWhen this creature dies, discard a random nonland card, then draw a card.',
+    computeStats: () => ({
+      renderedText: 'Defender.\nWhen this creature dies, discard a random nonland card, then draw a card.',
+      power: 1,
+      toughness: 2,
+    }),
+  },
+  {
+    id: 'not-a-chump-blocker',
+    name: 'Definitely Not a Chump',
+    manaCost: '{2}{W}{U}{B}{R}{G}',
+    typeLine: 'Creature — Overqualified Champion',
+    artFile: 'chump-blocker.png',
+    category: 'creature',
+    isPermanent: true,
+    minTurn: 3,
+    basePower: 1,
+    baseToughness: 2,
+    flavorText: '"I have mastered seven ancient martial disciplines just to stand in this doorway."',
+    templateText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nMust block if able.',
+    computeStats: () => ({
+      renderedText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nMust block if able.',
       power: 1,
       toughness: 2,
     }),
@@ -83,7 +198,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: '"Did I drop the sacred relic again?"',
     templateText: 'Destroy all creatures with mana value {X} or less.',
     computeStats: (turn, bracket) => {
-      if (bracket === 'b4' || turn >= 6) {
+      if (bracket === 'b5' || bracket === 'b4' || turn >= 6) {
         return { renderedText: 'Destroy all creatures. They cannot be regenerated.' };
       }
       const mv = bracket === 'b3' ? 5 : bracket === 'b1' ? 3 : 4;
@@ -102,7 +217,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: 'Please fill out form 27-B in triplicate before casting your spell.',
     templateText: 'Noncreature spells cost {X} more to cast.',
     computeStats: (_turn, bracket) => {
-      const tax = bracket === 'b4' ? 2 : 1;
+      const tax = bracket === 'b5' ? 3 : bracket === 'b4' ? 2 : 1;
       return {
         renderedText: `Noncreature spells you cast cost {${tax}} more to cast.`,
       };
@@ -135,7 +250,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: 'It smells questionable, but opponent devours it anyway.',
     templateText: 'Opponent gains {X} life.',
     computeStats: (_turn, bracket) => {
-      const heal = bracket === 'b4' ? 10 : bracket === 'b3' ? 8 : bracket === 'b1' ? 4 : 6;
+      const heal = bracket === 'b5' ? 14 : bracket === 'b4' ? 10 : bracket === 'b3' ? 8 : bracket === 'b1' ? 4 : 6;
       return {
         renderedText: `Opponent devours the pie and gains +${heal} life!`,
         healAmount: heal,
@@ -164,11 +279,12 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     typeLine: 'Legendary Creature — Good Boy Taxer',
     artFile: 'tax-collector-mowu.png',
     category: 'tax',
+    signatureCommanderId: 'tax-collector',
     isPermanent: true,
     minTurn: 3,
     basePower: 3,
     baseToughness: 3,
-    initialCounters: 1,
+    initialCounters: 0,
     flavorText: 'A very good boy who demands his treat taxes promptly.',
     templateText: 'Haste, Vigilance.\nWhenever you cast your second spell each turn, Mowu gains +1/+1 and you lose 2 life.',
     computeStats: () => ({
@@ -192,7 +308,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: 'Buzzing with concentrated infect.',
     templateText: 'Haste, Flying, Toxic 1.\nMust attack each combat if able.',
     computeStats: (turn, bracket) => {
-      const count = bracket === 'b4' || turn >= 6 ? 2 : 1;
+      const count = bracket === 'b5' ? 3 : bracket === 'b4' || turn >= 6 ? 2 : 1;
       return {
         renderedText: `Haste, Flying, Toxic 1 (Player takes 1 poison counter if unblocked).\nMust attack each combat if able. (Swarm Count: ${count})`,
         power: 1,
@@ -242,7 +358,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: 'Too huge to ignore.',
     templateText: 'Haste, Trample, Vigilance. Must attack each combat if able.',
     computeStats: (turn, bracket) => {
-      const bonus = bracket === 'b4' ? 4 : bracket === 'b3' ? 2 : 1;
+      const bonus = bracket === 'b5' ? 6 : bracket === 'b4' ? 4 : bracket === 'b3' ? 2 : 1;
       const stat = Math.max(5, turn + bonus);
       return {
         renderedText: `Haste, Trample, Vigilance.\nAttacks each combat if able. (${stat}/${stat})`,

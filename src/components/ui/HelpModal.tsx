@@ -91,10 +91,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               Brackets:
             </p>
             <ul className="text-xs text-neutral-400 mt-2 space-y-1 list-disc list-inside">
-              <li><strong className="text-emerald-400">Bracket 1 (Precon)</strong>: 10–13 turn goal, mild disruption.</li>
-              <li><strong className="text-sky-400">Bracket 2 (Casual)</strong>: 8–10 turn goal, balanced interaction.</li>
-              <li><strong className="text-amber-400">Bracket 3 (Optimized)</strong>: 5–7 turn goal, heavy threats & taxes.</li>
-              <li><strong className="text-rose-400">Bracket 4 (cEDH)</strong>: 3–5 turn goal, brutal stax & fast clocks.</li>
+              <li><strong className="text-emerald-400">Bracket 1 (Exhibition)</strong>: 11–14+ turn goal, gimmick decks, mild disruption.</li>
+              <li><strong className="text-sky-400">Bracket 2 (Casual)</strong>: 8–10 turn goal, standard precons, balanced interaction.</li>
+              <li><strong className="text-amber-400">Bracket 3 (Upgraded)</strong>: 6–8 turn goal, upgraded precons, focused synergy.</li>
+              <li><strong className="text-orange-400">Bracket 4 (Optimized)</strong>: 4–6 turn goal, fast mana, efficient combos & heavy pressure.</li>
+              <li><strong className="text-rose-400">Bracket 5 (cEDH)</strong>: 2–4 turn goal, maximum competitive power & ruthless stax.</li>
             </ul>
 
             <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">

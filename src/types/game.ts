@@ -1,4 +1,4 @@
-export type CommanderBracket = 'b1' | 'b2' | 'b3' | 'b4' | 'custom' | 'off';
+export type CommanderBracket = 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'custom' | 'off';
 
 export interface BracketConfig {
   id: CommanderBracket;
@@ -13,10 +13,10 @@ export interface BracketConfig {
 export const COMMANDER_BRACKETS: Record<CommanderBracket, BracketConfig> = {
   b1: {
     id: 'b1',
-    name: 'Bracket 1: Exhibition / Precon',
-    tag: 'B1: Precon',
-    description: 'Casual un-upgraded precons & low power. Relaxed pacing.',
-    targetTurns: '10–13+ turns',
+    name: 'Bracket 1: Exhibition / Gimmick',
+    tag: 'B1: Exhibition',
+    description: 'Theme decks, silly restrictions & low power. Relaxed pacing.',
+    targetTurns: '11–14+ turns',
     eventFrequency: 6,
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
   },
@@ -24,27 +24,36 @@ export const COMMANDER_BRACKETS: Record<CommanderBracket, BracketConfig> = {
     id: 'b2',
     name: 'Bracket 2: Core Casual',
     tag: 'B2: Casual',
-    description: 'Upgraded precons & average EDH decks. Balanced interaction.',
+    description: 'Standard precons & average EDH decks. Balanced interaction.',
     targetTurns: '8–10 turns',
     eventFrequency: 4,
     badgeColor: 'bg-sky-500/20 text-sky-400 border-sky-500/40',
   },
   b3: {
     id: 'b3',
-    name: 'Bracket 3: Optimized',
-    tag: 'B3: Optimized',
-    description: 'Tuned synergies, fast mana, efficient win conditions.',
-    targetTurns: '5–7 turns',
+    name: 'Bracket 3: Upgraded Casual',
+    tag: 'B3: Upgraded',
+    description: 'Upgraded precons, focused synergies, efficient removal & threats.',
+    targetTurns: '6–8 turns',
     eventFrequency: 3,
     badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
   },
   b4: {
     id: 'b4',
-    name: 'Bracket 4: cEDH / Max Power',
-    tag: 'B4: cEDH',
-    description: 'Competitive EDH. Turn 2–4 win attempts, aggressive stax.',
-    targetTurns: '3–5 turns',
+    name: 'Bracket 4: Optimized',
+    tag: 'B4: Optimized',
+    description: 'Tuned synergies, fast mana, efficient combos & heavy pressure.',
+    targetTurns: '4–6 turns',
     eventFrequency: 2,
+    badgeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+  },
+  b5: {
+    id: 'b5',
+    name: 'Bracket 5: cEDH / Max Power',
+    tag: 'B5: cEDH',
+    description: 'Competitive EDH. Turn 2–4 win attempts, aggressive stax.',
+    targetTurns: '2–4 turns',
+    eventFrequency: 1,
     badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/40',
   },
   custom: {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
 import { Swords, Sparkles, Coffee, ChevronRight, Skull } from 'lucide-react';
@@ -13,15 +13,42 @@ export const OpponentTurnModal: React.FC = () => {
     currentDrawnCard,
   } = useGameStore();
 
+  const [timeLeft, setTimeLeft] = useState(5.0);
+  const [isPaused, setIsPaused] = useState(false);
+
   if (!opponentTurnState) return null;
 
   const { phase, attackers, idleText } = opponentTurnState;
   const commander = opponentCommander;
   const accentColor = commander?.accentColor ?? 'amber';
 
+  // 5-second auto-skip timer during idle phase only
+  useEffect(() => {
+    if (phase !== 'idle') {
+      setTimeLeft(5.0);
+      return;
+    }
+
+    setTimeLeft(5.0);
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (isPaused) return prev;
+        if (prev <= 0.1) {
+          clearInterval(interval);
+          endOpponentTurn();
+          return 0;
+        }
+        return Math.max(0, +(prev - 0.1).toFixed(1));
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [phase, isPaused, endOpponentTurn]);
+
   // Color utility map for dynamic accent coloring
   const colorMap: Record<string, { bg: string; border: string; text: string; glow: string; badge: string }> = {
     amber: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', glow: 'shadow-amber-500/20', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', glow: 'shadow-emerald-500/20', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
     lime: { bg: 'bg-lime-500/10', border: 'border-lime-500/30', text: 'text-lime-400', glow: 'shadow-lime-500/20', badge: 'bg-lime-500/20 text-lime-300 border-lime-500/40' },
     sky: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400', glow: 'shadow-sky-500/20', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
     blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400', glow: 'shadow-blue-500/20', badge: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
@@ -50,10 +77,15 @@ export const OpponentTurnModal: React.FC = () => {
 
   const getButtonText = () => {
     if (phase === 'event') {
-      return attackers.length > 0 ? 'Continue to Combat' : 'Continue';
+      return attackers.length > 0 ? 'Continue to Combat (Space / Enter)' : 'Continue (Space / Enter)';
     }
-    if (phase === 'combat') return 'End Opponent Turn';
-    return 'Continue to Your Turn';
+    if (phase === 'combat') return 'End Opponent Turn (Space / Enter)';
+    if (phase === 'idle') {
+      return isPaused
+        ? 'Paused — Continue to Your Turn (Space / Enter)'
+        : `Passing turn in ${Math.ceil(timeLeft)}s... (Space / Enter)`;
+    }
+    return 'Continue to Your Turn (Space / Enter)';
   };
 
   const totalAttackPower = attackers.reduce((sum, a) => sum + a.power, 0);
@@ -203,13 +235,26 @@ export const OpponentTurnModal: React.FC = () => {
         </div>
 
         {/* Action Button */}
-        <div className="p-4 border-t border-neutral-800 bg-neutral-950/60 shrink-0">
+        <div
+          className="p-4 border-t border-neutral-800 bg-neutral-950/60 shrink-0"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           <button
             onClick={handleContinue}
-            className={`btn-press w-full py-3 rounded-xl bg-gradient-to-r from-neutral-700 to-neutral-600 hover:from-neutral-600 hover:to-neutral-500 text-white font-bold text-sm shadow-md border border-neutral-500/30 flex items-center justify-center gap-2 cursor-pointer transition-all`}
+            className={`btn-press relative overflow-hidden w-full py-3 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-white font-bold text-sm shadow-md border border-neutral-700 flex items-center justify-center gap-2 cursor-pointer transition-all`}
           >
-            <ChevronRight className="w-4 h-4" />
-            <span>{getButtonText()} (Space / Enter)</span>
+            {/* Animated progress bar fill during idle countdown */}
+            {phase === 'idle' && (
+              <div
+                className="absolute left-0 top-0 bottom-0 bg-neutral-700/60 transition-[width] duration-100 ease-linear pointer-events-none"
+                style={{ width: `${((5 - timeLeft) / 5) * 100}%` }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <ChevronRight className="w-4 h-4" />
+              <span>{getButtonText()}</span>
+            </span>
           </button>
         </div>
       </div>

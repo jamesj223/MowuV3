@@ -482,7 +482,16 @@ export const useGameStore = create<GameStoreState>()(
 
       triggerEvent: (forceCardId?: string) => {
         const state = get();
-        let eligible = EVENT_CARDS.filter((c) => (c.minTurn ?? 1) <= state.turn);
+        let eligible = EVENT_CARDS.filter((c) => {
+          if ((c.minTurn ?? 1) > state.turn) return false;
+          if (c.signatureCommanderId && state.opponentCommander?.id !== c.signatureCommanderId) {
+            return false;
+          }
+          return true;
+        });
+        if (eligible.length === 0) {
+          eligible = EVENT_CARDS.filter((c) => !c.signatureCommanderId || state.opponentCommander?.id === c.signatureCommanderId);
+        }
         if (eligible.length === 0) eligible = EVENT_CARDS;
 
         let cardDef;
