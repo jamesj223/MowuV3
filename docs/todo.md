@@ -6,7 +6,7 @@
 - [x] **Idle turn auto-skip with 5s animated progress bar**: In `OpponentTurnModal`, when Mowu has nothing to do, a 5-second countdown runs with a visual progress bar. Space/Enter or click skips immediately; hovering pauses. Never auto-skips attacks or spell casts.
 - [x] **Tax Collector Mowu counter fix**: Removed initial counter; now enters clean at 3/3 and accumulates counters only when 2nd spell is cast.
 - [x] **Commander card deduplication**: Added `signatureCommanderId` system so commanders only summon their own signature cards.
-- [x] **5 Commander Brackets**: B1 Exhibition (11–14+ turns), B2 Core Casual (8–10 turns), B3 Upgraded (6–8 turns), B4 Optimized (4–6 turns), B5 cEDH (2–4 turns).
+- [x] **5 Commander Brackets**: B1 Exhibition, B2 Core, B3 Upgraded, B4 Optimized, B5 cEDH. Names, expectations and turn guidance (at least 9 / 8 / 6 / 4 turns; cEDH any turn) now follow Wizards' Oct 2025 update (ADR-017).
 - [x] **Rebalanced Mowu Commanders**:
   - B1: Left-Facing Mowu (👈) and Chair-Sitting Mowu (🪑) (gimmick-only, no stax/infect).
   - B2–B5: Tax Collector Mowu (🐕) & Scholar Mowu (📚)
