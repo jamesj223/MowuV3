@@ -250,3 +250,17 @@ export const buildMatchRecord = (
   eventCount: game.eventsTriggered,
   won,
 });
+
+export type PaceVerdict = 'faster' | 'within' | 'none';
+
+/**
+ * Compare a win against the bracket's official turn expectation.
+ * Wizards: "at least six turns before you win or lose" means the 7th turn is
+ * the first one where a game ending feels right, so winning on turn <= minTurns
+ * is faster than the bracket expects.
+ */
+export const getPaceVerdict = (winTurn: number, bracket: CommanderBracket): PaceVerdict => {
+  const min = COMMANDER_BRACKETS[bracket].minTurns;
+  if (min === null) return 'none';
+  return winTurn <= min ? 'faster' : 'within';
+};

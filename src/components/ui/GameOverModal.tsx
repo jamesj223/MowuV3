@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
-import { buildMatchRecord } from '@/logic/game';
+import { buildMatchRecord, getPaceVerdict } from '@/logic/game';
 import { Trophy, RotateCcw, Play, CheckCircle2, Biohazard, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -68,6 +68,19 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
 
         <h2 className="text-2xl font-black text-white tracking-tight">{getVictoryTitle()}</h2>
         <p className="text-sm text-neutral-400 mt-1">{getVictorySubtitle()}</p>
+
+        {/* Pace vs. the bracket's official turn expectation */}
+        {getPaceVerdict(turn, bracket) === 'faster' && (
+          <p className="mt-3 w-full text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+            Faster than {bracketConfig.name} expects (at least {bracketConfig.minTurns} turns before
+            anyone wins). This deck may play above this bracket.
+          </p>
+        )}
+        {getPaceVerdict(turn, bracket) === 'within' && (
+          <p className="mt-3 w-full text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
+            On pace for {bracketConfig.name} (expects at least {bracketConfig.minTurns} turns).
+          </p>
+        )}
 
         {/* Stats Summary Box */}
         <div className="w-full grid grid-cols-3 gap-2 my-5 p-3 rounded-xl bg-neutral-950/70 border border-neutral-800">

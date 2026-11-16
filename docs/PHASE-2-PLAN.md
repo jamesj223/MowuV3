@@ -100,5 +100,5 @@ Replace the single static Chump Blocker with a flavorful pool of 7 blockers:
 
 > **Status:** Implemented on `feat/phase-2`, then merged with the bug-fix branch and tested
 > (unit tests + browser playthrough). The idle auto-skip was rewritten as `src/hooks/useIdleAutoSkip.ts`
-> (the original broke React's rules of hooks). Open question: the bracket **target turns** above
-> are not yet verified against Wizards' official guidance (see the "Open questions" section of `ROADMAP.md`).
+> (the original broke React's rules of hooks). The bracket **target turns** in the table below
+> were replaced by Wizards' official turn expectations (9+ / 8+ / 6+ / 4+ / any); see ADR-017.

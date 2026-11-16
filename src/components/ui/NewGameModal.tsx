@@ -185,6 +185,25 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
               </button>
             </div>
 
+            {/* Official expectations for the selected bracket */}
+            {COMMANDER_BRACKETS[selectedBracket].expectations.length > 0 && (
+              <div className="mt-2.5 p-3 rounded-xl bg-neutral-950/60 border border-neutral-800 text-[11px] text-neutral-400">
+                <p className="font-semibold text-neutral-300 mb-1">
+                  {COMMANDER_BRACKETS[selectedBracket].name}: players expect
+                </p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {COMMANDER_BRACKETS[selectedBracket].expectations.map((e) => (
+                    <li key={e}>{e}</li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-neutral-500">
+                  {COMMANDER_BRACKETS[selectedBracket].minTurns !== null
+                    ? `Expect to play at least ${COMMANDER_BRACKETS[selectedBracket].minTurns} turns before you win or lose.`
+                    : 'These games could end on any turn.'}
+                </p>
+              </div>
+            )}
+
             {selectedBracket === 'custom' && (
               <div className="mt-2.5 flex items-center gap-2 p-2.5 rounded-xl bg-neutral-950 border border-neutral-800">
                 <span className="text-xs text-neutral-400">Trigger event every:</span>

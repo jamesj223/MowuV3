@@ -47,7 +47,7 @@ export const TurnCounter: React.FC = () => {
               Turn & Tempo
             </h2>
             <p className="text-[10px] text-neutral-500">
-              Goal: <span className="text-neutral-300 font-mono">{bracketConfig.targetTurns}</span>
+              Expected game: <span className="text-neutral-300 font-mono">{bracketConfig.targetTurns}</span>
             </p>
           </div>
         </div>

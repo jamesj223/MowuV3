@@ -46,16 +46,24 @@ The flag button in the navbar concedes the game and logs a loss for the current 
 
 ## Brackets
 
-| Bracket | Target win turn | Event every |
-| --- | --- | --- |
-| B1 Precon | 10–13+ | 6 turns |
-| B2 Casual | 8–10 | 4 turns |
-| B3 Optimized | 5–7 | 3 turns |
-| B4 cEDH | 3–5 | 2 turns |
-| Custom | — | you choose |
-| Off (solitaire) | — | never |
+Brackets follow Wizards of the Coast's Commander Brackets, as revised in the
+[October 21, 2025 update](https://magic.wizards.com/en/news/announcements/commander-brackets-beta-update-october-21-2025).
+Each bracket says how many turns you should expect to play before anyone wins or loses. The victory screen
+compares your winning turn against that, so a deck that consistently wins sooner is probably playing above
+its bracket.
 
-Event cards scale with both the bracket and the turn number (see `computeStats` in `src/data/cards.ts`).
+| Bracket | Expect to play at least | Opponent event every |
+| --- | --- | --- |
+| 1: Exhibition | 9 turns | 6 turns |
+| 2: Core | 8 turns | 4 turns |
+| 3: Upgraded | 6 turns | 3 turns |
+| 4: Optimized | 4 turns | 2 turns |
+| 5: cEDH | any turn | every turn |
+| Custom | | you choose |
+| Off (solitaire) | | never |
+
+The official "players expect" descriptions appear in the New Game dialog. Event cadence and card scaling
+are Mowu's own tuning (see `src/types/game.ts` and `computeStats` in `src/data/cards.ts`).
 
 ## Development
 

@@ -11,9 +11,9 @@
 - **Docs**: the app README (`README.md`) covers hotkeys, project layout and how to add a card.
 
 ### Open questions
-1. **Bracket target turns.** The current values (11–14+, 8–10, 6–8, 4–6, 2–4) came from earlier LLM sessions. Secondary summaries of Wizards' Oct 2025 Commander Brackets update give roughly 9 / 8 / 6 / 4 / any turn; this needs checking against the official article before changing.
-2. **Card scaling.** The per-bracket multipliers and formulas in `src/data/cards.ts` are untuned guesses. Intended feel: between solitaire goldfishing and a Forge/Arena-style bot; on B2+ the bot should usually do *something* each turn. Needs a design pass plus playtesting: which events suit which turn/bracket/deck, and how strongly they scale.
-3. **Help text** still claims difficulty "matches the official MTG Commander Brackets"; reword once 1 and 2 are settled.
+1. ~~Bracket target turns~~ Resolved: official Oct 2025 wording and turn expectations (ADR-017).
+2. **Card scaling.** The per-bracket multipliers and formulas in `src/data/cards.ts` are untuned guesses. Intended feel: between solitaire goldfishing and a Forge/Arena-style bot; on B2+ the bot should usually do *something* each turn. Needs a design pass plus playtesting: which events suit which turn/bracket/deck, and how strongly they scale. The bracket `minTurns` give a target: a typical deck for a bracket should win a bit after that turn.
+3. ~~Help text~~ Resolved: no longer claims difficulty "matches" the brackets.
 
 ---
 

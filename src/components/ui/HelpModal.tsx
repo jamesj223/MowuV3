@@ -87,15 +87,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>Commander Bracket System</span>
             </h3>
             <p className="text-xs text-neutral-400 leading-relaxed">
-              Mowu v3 scales event difficulty and turn cadence to match the official MTG Commander
-              Brackets:
+              Brackets follow Wizards of the Coast's Commander Brackets (October 2025 update). Each
+              bracket sets how many turns you should expect to play before anyone wins or loses. Mowu
+              uses that as your benchmark: win sooner than that and your deck is probably playing
+              above the bracket. The opponent casts events more often at higher brackets.
             </p>
             <ul className="text-xs text-neutral-400 mt-2 space-y-1 list-disc list-inside">
-              <li><strong className="text-emerald-400">Bracket 1 (Exhibition)</strong>: 11–14+ turn goal, gimmick decks, mild disruption.</li>
-              <li><strong className="text-sky-400">Bracket 2 (Casual)</strong>: 8–10 turn goal, standard precons, balanced interaction.</li>
-              <li><strong className="text-amber-400">Bracket 3 (Upgraded)</strong>: 6–8 turn goal, upgraded precons, focused synergy.</li>
-              <li><strong className="text-orange-400">Bracket 4 (Optimized)</strong>: 4–6 turn goal, fast mana, efficient combos & heavy pressure.</li>
-              <li><strong className="text-rose-400">Bracket 5 (cEDH)</strong>: 2–4 turn goal, maximum competitive power & ruthless stax.</li>
+              <li><strong className="text-emerald-400">Bracket 1: Exhibition</strong>: theme over power; at least 9 turns.</li>
+              <li><strong className="text-sky-400">Bracket 2: Core</strong>: unoptimized, low-pressure; at least 8 turns.</li>
+              <li><strong className="text-amber-400">Bracket 3: Upgraded</strong>: strong synergy, one-big-turn wins; at least 6 turns.</li>
+              <li><strong className="text-orange-400">Bracket 4: Optimized</strong>: lethal, consistent and fast; at least 4 turns.</li>
+              <li><strong className="text-rose-400">Bracket 5: cEDH</strong>: built for the cEDH metagame; any turn.</li>
             </ul>
 
             <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
