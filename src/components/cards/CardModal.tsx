@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlaytestCard } from './PlaytestCard';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
+import { getEffectiveStats } from '@/logic/game';
 import { X, Sparkles } from 'lucide-react';
 
 interface CardModalProps {
@@ -11,6 +12,7 @@ interface CardModalProps {
 
 export const CardModal: React.FC<CardModalProps> = ({ card, onClose, isNewDraw = false }) => {
   if (!card) return null;
+  const stats = 'counters' in card ? getEffectiveStats(card) : {};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200">
@@ -37,8 +39,8 @@ export const CardModal: React.FC<CardModalProps> = ({ card, onClose, isNewDraw =
           artFile={card.artFile}
           renderedText={card.renderedText}
           flavorText={'flavorText' in card ? card.flavorText : undefined}
-          power={'power' in card ? card.power : undefined}
-          toughness={'toughness' in card ? card.toughness : undefined}
+          power={stats.power}
+          toughness={stats.toughness}
           variant="detailed"
           size="lg"
         />

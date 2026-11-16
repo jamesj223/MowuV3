@@ -5,6 +5,7 @@ import type { CommanderBracket } from '@/types/game';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import { MOWU_COMMANDERS } from '@/data/commanders';
 import { X, Play, Settings } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 interface NewGameModalProps {
   isOpen: boolean;
@@ -20,9 +21,21 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
     trackPlayer,
     currentDeckName,
     startNewGame,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      startingOpponentHealth: s.startingOpponentHealth,
+      startingPlayerLife: s.startingPlayerLife,
+      bracket: s.bracket,
+      customEventFrequency: s.customEventFrequency,
+      trackPlayer: s.trackPlayer,
+      currentDeckName: s.currentDeckName,
+      startNewGame: s.startNewGame,
+    })),
+  );
 
-  const { decks, addDeck } = useDeckStore();
+  const { decks, addDeck } = useDeckStore(
+    useShallow((s) => ({ decks: s.decks, addDeck: s.addDeck })),
+  );
 
   const [deckName, setDeckName] = useState(currentDeckName || '');
   const [oppHealth, setOppHealth] = useState(startingOpponentHealth);

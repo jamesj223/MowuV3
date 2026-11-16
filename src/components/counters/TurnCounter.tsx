@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import { Play, Sparkles, Clock, Undo2, User, Swords } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 export const TurnCounter: React.FC = () => {
   const {
@@ -14,7 +15,19 @@ export const TurnCounter: React.FC = () => {
     customEventFrequency,
     isGameOver,
     opponentCommander,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      turn: s.turn,
+      turnPhase: s.turnPhase,
+      nextTurn: s.nextTurn,
+      prevTurn: s.prevTurn,
+      triggerEvent: s.triggerEvent,
+      bracket: s.bracket,
+      customEventFrequency: s.customEventFrequency,
+      isGameOver: s.isGameOver,
+      opponentCommander: s.opponentCommander,
+    })),
+  );
 
   const bracketConfig = COMMANDER_BRACKETS[bracket];
   const freq = bracket === 'custom' ? customEventFrequency : bracketConfig.eventFrequency;
@@ -119,7 +132,7 @@ export const TurnCounter: React.FC = () => {
               onClick={() => triggerEvent()}
               disabled={isOpponentPhase}
               className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 cursor-pointer transition-all disabled:opacity-30"
-              title="Draw manual event card (Ctrl+E)"
+              title="Draw manual event card (E)"
             >
               <Sparkles className="w-3.5 h-3.5" />
             </button>

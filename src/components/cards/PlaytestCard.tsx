@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ManaSymbols } from './ManaSymbols';
+import type { CounterType } from '@/types/card';
+
+/** Resolves card art against Vite's base URL so the app also works under a sub-path. */
+const artUrl = (artFile: string) => `${import.meta.env.BASE_URL}cards/${artFile}`;
 import { Minus, Plus, Skull, X, ZoomIn } from 'lucide-react';
 
 interface PlaytestCardProps {
@@ -12,6 +16,7 @@ interface PlaytestCardProps {
   power?: number | string;
   toughness?: number | string;
   counters?: number;
+  counterType?: CounterType;
   variant?: 'in_play' | 'detailed';
   size?: 'sm' | 'md' | 'lg';
   onDismiss?: () => void;
@@ -31,6 +36,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
   power,
   toughness,
   counters = 0,
+  counterType,
   variant = 'in_play',
   size = 'sm',
   onDismiss,
@@ -84,7 +90,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
           <div className="relative w-full h-18 bg-[#e2dec9] rounded border border-[#999] overflow-hidden mb-1 flex items-center justify-center shrink-0">
             {!imageError ? (
               <img
-                src={`/cards/${artFile}`}
+                src={artUrl(artFile)}
                 alt={name}
                 onError={() => setImageError(true)}
                 className="w-full h-full object-cover"
@@ -124,7 +130,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
           )}
         </div>
 
-        {counters > 0 && onCounterChange && (
+        {counterType && onCounterChange && (
           <div className="absolute bottom-2 left-2 z-20 flex h-5 items-center gap-1 rounded-full border border-amber-500/40 bg-neutral-950/95 p-0.5 text-[9px] font-black text-amber-300 shadow-lg">
             <button
               type="button"
@@ -134,11 +140,13 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
               }}
               disabled={counters === 0}
               className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-neutral-800 text-[10px] text-white hover:bg-neutral-700 disabled:opacity-30"
-              title="Remove one counter"
+              title={counterType === 'swarm' ? 'Remove one from the swarm' : 'Remove a +1/+1 counter'}
             >
               −
             </button>
-            <span className="min-w-4 text-center font-mono">{counters}</span>
+            <span className="min-w-4 text-center font-mono">
+              {counterType === 'swarm' ? `×${counters}` : `+${counters}`}
+            </span>
             <button
               type="button"
               onClick={(event) => {
@@ -146,7 +154,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
                 onCounterChange(1);
               }}
               className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[10px] text-neutral-950 hover:bg-amber-400"
-              title="Add one counter"
+              title={counterType === 'swarm' ? 'Add one to the swarm' : 'Add a +1/+1 counter'}
             >
               +
             </button>
@@ -155,12 +163,16 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
 
         {contextMenuOpen && onContextMenuAction && (
           <div data-counter-menu className="absolute bottom-2 left-2 z-30 min-w-44 rounded-xl border border-neutral-700 bg-neutral-950 p-1.5 text-xs text-neutral-200 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <button type="button" onClick={() => { onContextMenuAction('increment'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-neutral-800">
-              <Plus className="w-3 w-3" /> Add counter
-            </button>
-            <button type="button" onClick={() => { onContextMenuAction('decrement'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-neutral-800">
-              <Minus className="w-3 h-3" /> Remove counter
-            </button>
+            {counterType && (
+              <>
+                <button type="button" onClick={() => { onContextMenuAction('increment'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-neutral-800">
+                  <Plus className="w-3 h-3" /> Add counter
+                </button>
+                <button type="button" onClick={() => { onContextMenuAction('decrement'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-neutral-800">
+                  <Minus className="w-3 h-3" /> Remove counter
+                </button>
+              </>
+            )}
             <button type="button" onClick={() => { onContextMenuAction('destroy'); setContextMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-rose-400 hover:bg-rose-950/50">
               <Skull className="w-3 h-3" /> Destroy
             </button>
@@ -234,7 +246,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
         <div className={`relative w-full ${sizeConfig.artHeight} bg-[#e2dec9] rounded border border-[#999] overflow-hidden mb-2 flex items-center justify-center`}>
           {!imageError ? (
             <img
-              src={`/cards/${artFile}`}
+              src={artUrl(artFile)}
               alt={name}
               onError={() => setImageError(true)}
               className="w-full h-full object-cover"
@@ -243,7 +255,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
             <div className="flex flex-col items-center justify-center p-2 text-center text-neutral-600 bg-amber-50/50 w-full h-full">
               <span className="text-xl">🎨</span>
               <span className="text-xs font-mono font-semibold text-neutral-700">MS Paint Canvas</span>
-              <span className="text-[10px] text-neutral-500 font-mono">/public/cards/{artFile}</span>
+              <span className="text-[10px] text-neutral-500 font-mono">public/cards/{artFile}</span>
             </div>
           )}
         </div>

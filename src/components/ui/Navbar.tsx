@@ -1,8 +1,11 @@
 import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
+import { concedeGame, confirmAndRestart } from '@/lib/gameActions';
+import { useShallow } from 'zustand/react/shallow';
 import {
   RotateCcw,
+  Flag,
   PlusCircle,
   BarChart3,
   HelpCircle,
@@ -26,8 +29,17 @@ export const Navbar: React.FC<NavbarProps> = ({
     opponentHealth,
     startingOpponentHealth,
     bracket,
-    resetGame,
-  } = useGameStore();
+    isGameOver,
+  } = useGameStore(
+    useShallow((s) => ({
+      currentDeckName: s.currentDeckName,
+      turn: s.turn,
+      opponentHealth: s.opponentHealth,
+      startingOpponentHealth: s.startingOpponentHealth,
+      bracket: s.bracket,
+      isGameOver: s.isGameOver,
+    })),
+  );
 
   const bracketConfig = COMMANDER_BRACKETS[bracket];
 
@@ -76,9 +88,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
-            onClick={() => resetGame()}
+            onClick={concedeGame}
+            disabled={isGameOver}
+            className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-rose-400 border border-neutral-700/80 cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-default"
+            title="Concede & record a loss in match history"
+            aria-label="Concede"
+          >
+            <Flag className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={confirmAndRestart}
             className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-700/80 cursor-pointer transition-colors"
-            title="Quick Restart (Ctrl+Q)"
+            title="Quick Restart (Shift+R)"
+            aria-label="Restart"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -87,6 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onOpenStats}
             className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-700/80 cursor-pointer transition-colors"
             title="Analytics & Match History (B)"
+            aria-label="Analytics"
           >
             <BarChart3 className="w-4 h-4" />
           </button>
@@ -95,6 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onOpenHelp}
             className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-700/80 cursor-pointer transition-colors"
             title="Keyboard Shortcuts & Help (?)"
+            aria-label="Help"
           >
             <HelpCircle className="w-4 h-4" />
           </button>

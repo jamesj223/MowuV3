@@ -1,32 +1,99 @@
-# React + TypeScript + Vite
+# Mowu v3 — MTG Commander Goldfish Companion
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Mowu is a browser companion for **goldfishing** Magic: The Gathering Commander decks: playing your deck solo
+against a simulated opponent pod to see how fast it can close out a game.
 
-Currently, two official plugins are available:
+It tracks the pod's shared life total (120 by default, three opponents × 40), optional poison and commander-damage
+tracks, and your own life. It also runs an AI opponent: a randomly assigned "Mowu" commander casts event cards
+scaled to your [Commander Bracket](#brackets) and attacks you with its creatures.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Opponent life tracker.** Damage is recorded the moment you deal it. A floating badge shows the running
+  delta for the current burst.
+- **Opponent turns.** After each of your turns, the opponent may cast an event card (on the bracket's cadence)
+  and declares attackers with its non-Defender creatures. Creatures it casts during its own turn have summoning
+  sickness unless they have Haste.
+- **Mowu commanders.** Each one biases which kinds of card appear (taxes, creatures, removal…) and has its own
+  idle flavour text.
+- **Counters.** +1/+1 counters (e.g. Tax Collector Mowu) pump the creature. Swarm counters (Toxic Mosquito
+  Swarm) set how many bodies attack.
+- **Stats.** The current game's life curve and damage per turn, per-deck benchmarks (wins/losses, fastest win,
+  averages), and a match log with JSON export/import.
+- **Persistence.** Settings, the game in progress and match history are saved to `localStorage`, so a reload
+  doesn't lose your game.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Hotkeys
 
-## Expanding the Oxlint configuration
+| Action | Keys |
+| --- | --- |
+| End turn / continue opponent turn | `Space`, `Enter` |
+| Deal damage (1 / 5 / 10) | `S`, `↓`, `-` · with `Shift` ×5 · with `Alt` ×10 |
+| Heal / roll back (1 / 5 / 10) | `W`, `↑`, `+` · with `Shift` ×5 · with `Alt` ×10 |
+| Trigger a random event | `E` |
+| Restart (asks first if a game is in progress) | `Shift + R` |
+| Analytics | `B` |
+| Close dialog / open New Game | `Esc` |
+| Help | `?` |
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Ctrl/Cmd shortcuts are left to the browser on purpose.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+**Rollback vs. life gain.** A manual heal (`W` / `↑` / `+`) is treated as an undo: it removes damage you dealt
+*this turn*. Life the opponent gains from an event card changes its life total only and never reduces your
+damage stats.
+
+The flag button in the navbar concedes the game and logs a loss for the current deck.
+
+## Brackets
+
+| Bracket | Target win turn | Event every |
+| --- | --- | --- |
+| B1 Precon | 10–13+ | 6 turns |
+| B2 Casual | 8–10 | 4 turns |
+| B3 Optimized | 5–7 | 3 turns |
+| B4 cEDH | 3–5 | 2 turns |
+| Custom | — | you choose |
+| Off (solitaire) | — | never |
+
+Event cards scale with both the bracket and the turn number (see `computeStats` in `src/data/cards.ts`).
+
+## Development
+
+```bash
+npm install
+npm run dev          # start the dev server
+npm test             # unit tests (Vitest)
+npm run lint         # oxlint
+npm run build        # type-check + production build
+npm run placeholders # create placeholder art for any card missing an image
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+CI (`.github/workflows/ci.yml`) runs lint, tests and build on every push to `master` and on every pull request.
+
+### Project layout
+
+```
+src/
+  logic/game.ts        pure game rules (victory, attackers, counters, damage bookkeeping), unit-tested
+  store/               Zustand stores: live game + settings, decks + match history
+  data/cards.ts        event card definitions and their bracket/turn scaling
+  data/commanders.ts   Mowu commander variants, card weights and idle texts
+  components/          UI (counters, battlefield, modals, stats)
+  hooks/useHotkeys.ts  keyboard shortcuts
+public/cards/          card art served at runtime (PNG)
+art-src/               editable art source files (.pxd), not shipped in the build
+```
+
+### Adding a card
+
+1. Add an entry to `EVENT_CARDS` in `src/data/cards.ts`. Give it a `category`, set `isPermanent` (creatures and
+   enchantments stay on the battlefield), and write a `computeStats(turn, bracket)` that returns the rendered
+   rules text plus any power/toughness, `healAmount` or starting `counters`. Set `counterType` if its counters mean
+   something (`'plus-one'` or `'swarm'`).
+2. Drop the art into `public/cards/<artFile>`. Until you do, the card shows an "MS Paint" placeholder.
+3. Run `npm test`. The card-data tests check every card across all brackets and several turn numbers.
+
+### Deploying under a sub-path
+
+Card art is resolved against Vite's `base`, so you can build for a sub-path (e.g. GitHub Pages) with
+`npx vite build --base=/your-repo/`.

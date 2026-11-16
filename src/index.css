@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* In-between neutral shades used by the UI (not in Tailwind's default palette) */
+@theme {
+  --color-neutral-750: oklch(0.32 0 0);
+  --color-neutral-850: oklch(0.237 0 0);
+}
+
+/* Modal entrance: used as `animate-in fade-in` */
+@keyframes mowu-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-in.fade-in {
+  animation: mowu-fade-in 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-in.fade-in { animation: none; }
+}
+
 @layer base {
   :root {
     --bg-dark: #0f1117;

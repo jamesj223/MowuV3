@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { HoldButton } from '@/components/ui/HoldButton';
 import { Shield, Biohazard, Crown } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 export const DamageTracker: React.FC = () => {
   const {
@@ -21,7 +22,26 @@ export const DamageTracker: React.FC = () => {
     toggleTrackOpponentCommanderDamage,
     isGameOver,
     opponentCommander,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      opponentHealth: s.opponentHealth,
+      totalDamageDealt: s.totalDamageDealt,
+      accumulatedDelta: s.accumulatedDelta,
+      isDeltaVisible: s.isDeltaVisible,
+      applyDamageToOpponent: s.applyDamageToOpponent,
+      applyOpponentHealthChange: s.applyOpponentHealthChange,
+      opponentPoison: s.opponentPoison,
+      opponentCommanderDamage: s.opponentCommanderDamage,
+      adjustOpponentPoison: s.adjustOpponentPoison,
+      adjustOpponentCommanderDamage: s.adjustOpponentCommanderDamage,
+      trackOpponentPoison: s.trackOpponentPoison,
+      trackOpponentCommanderDamage: s.trackOpponentCommanderDamage,
+      toggleTrackOpponentPoison: s.toggleTrackOpponentPoison,
+      toggleTrackOpponentCommanderDamage: s.toggleTrackOpponentCommanderDamage,
+      isGameOver: s.isGameOver,
+      opponentCommander: s.opponentCommander,
+    })),
+  );
 
   return (
     <div className="flex flex-col bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm gap-3">

@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/store/useGameStore';
+import { confirmAndRestart } from '@/lib/gameActions';
 
 interface HotkeyCallbacks {
   onOpenHelp: () => void;
@@ -9,156 +10,114 @@ interface HotkeyCallbacks {
   hasOpenModal: boolean;
 }
 
-export const useHotkeys = ({
-  onOpenHelp,
-  onOpenSettings,
-  onOpenStats,
-  onCloseAnyModal,
-  hasOpenModal,
-}: HotkeyCallbacks) => {
-  const {
-    applyOpponentHealthChange,
-    nextTurn,
-    triggerEvent,
-    resetGame,
-    currentDrawnCard,
-    closeDrawnCard,
-    turnPhase,
-    opponentTurnState,
-    advanceOpponentPhase,
-    endOpponentTurn,
-  } = useGameStore();
+/**
+ * Keyboard shortcuts.
+ *
+ * Modifiers: Shift = x5, Alt = x10. Ctrl/Cmd combos are deliberately left to the
+ * browser (Ctrl+W / Ctrl+Q can't be intercepted and would close the tab/browser).
+ * Letter keys use `event.code` so they work on any layout and with Alt on macOS.
+ */
+export const useHotkeys = (callbacks: HotkeyCallbacks) => {
+  // Keep the latest callbacks in a ref so the listener is attached once.
+  const cb = useRef(callbacks);
+  useEffect(() => {
+    cb.current = callbacks;
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) {
         return;
       }
+      if (e.ctrlKey || e.metaKey) return;
 
-      const key = e.key.toLowerCase();
-      const isOpponentTurn = turnPhase === 'opponent' && opponentTurnState !== null;
+      const { onOpenHelp, onOpenSettings, onOpenStats, onCloseAnyModal, hasOpenModal } = cb.current;
+      const game = useGameStore.getState();
+      const opp = game.turnPhase === 'opponent' ? game.opponentTurnState : null;
+      const isConfirmKey = e.key === ' ' || e.key === 'Enter';
 
-      // Escape closes any open modal; Space/Enter follows the same modal policy.
-      if (e.key === 'Escape') {
-        if (isOpponentTurn) {
-          // During opponent turn, Escape advances through phases
-          if (currentDrawnCard) {
-            closeDrawnCard();
-            advanceOpponentPhase();
-          } else if (opponentTurnState.phase === 'idle' || opponentTurnState.phase === 'complete') {
-            endOpponentTurn();
-          } else {
-            advanceOpponentPhase();
-          }
-          return;
-        }
-        if (currentDrawnCard) {
-          closeDrawnCard();
-          return;
-        }
-        if (hasOpenModal) {
-          onCloseAnyModal();
-          return;
-        }
-        onOpenSettings();
-        return;
-      }
-
-      // Space/Enter during opponent turn advances through phases
-      if (isOpponentTurn && (e.key === ' ' || e.key === 'Enter')) {
+      // Holding Space/Enter must not fast-forward through turns
+      if (isConfirmKey && e.repeat) {
         e.preventDefault();
-        if (currentDrawnCard && opponentTurnState.phase === 'event') {
-          closeDrawnCard();
-          advanceOpponentPhase();
-        } else if (opponentTurnState.phase === 'idle' || opponentTurnState.phase === 'complete') {
-          endOpponentTurn();
+        return;
+      }
+
+      const advanceOpponentTurn = () => {
+        if (!opp) return;
+        if (game.currentDrawnCard && opp.phase === 'event') {
+          game.closeDrawnCard();
+          game.advanceOpponentPhase();
+        } else if (opp.phase === 'idle' || opp.phase === 'complete') {
+          game.endOpponentTurn();
         } else {
-          advanceOpponentPhase();
+          game.advanceOpponentPhase();
         }
-        return;
+      };
+
+      if (e.key === 'Escape') {
+        if (opp) return advanceOpponentTurn();
+        if (game.currentDrawnCard) return game.closeDrawnCard();
+        if (hasOpenModal) return onCloseAnyModal();
+        return onOpenSettings();
       }
 
-      if (hasOpenModal && (e.key === ' ' || e.key === 'Enter')) {
+      if (isConfirmKey) {
         e.preventDefault();
-        if (currentDrawnCard) closeDrawnCard();
-        else onCloseAnyModal();
+        if (opp) return advanceOpponentTurn();
+        if (hasOpenModal) return onCloseAnyModal();
+        game.nextTurn();
         return;
       }
 
-      // Quick restart with current settings
-      if (e.ctrlKey && key === 'q') {
-        e.preventDefault();
-        resetGame();
-        return;
-      }
+      // Everything below acts on the board, so ignore it while anything covers the board.
+      if (hasOpenModal || opp) return;
 
-      // Trigger manual event
-      if (e.ctrlKey && key === 'e') {
-        e.preventDefault();
-        triggerEvent();
-        return;
-      }
-
-      // Next Turn (Space or Enter)
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        nextTurn();
-        return;
-      }
-
-      // Deal Damage to Opponent (Down arrow, S, or -)
-      if (e.key === 'ArrowDown' || key === 's' || e.key === '-') {
-        e.preventDefault();
-        const amt = e.ctrlKey ? 10 : e.shiftKey ? 5 : 1;
-        applyOpponentHealthChange(-amt);
-        return;
-      }
-
-      // Heal / Rollback Opponent Life (Up arrow, W, or +)
-      if (e.key === 'ArrowUp' || key === 'w' || e.key === '+') {
-        e.preventDefault();
-        const amt = e.ctrlKey ? 10 : e.shiftKey ? 5 : 1;
-        applyOpponentHealthChange(amt);
-        return;
-      }
-
-      // Open Help Cheat-sheet
-      if (e.key === '?' || e.key === '/') {
+      if (e.key === '?' || e.code === 'Slash') {
         e.preventDefault();
         onOpenHelp();
         return;
       }
 
-      // Open Stats / Benchmarks
-      if (key === 'b') {
+      if (e.code === 'KeyR' && e.shiftKey) {
+        e.preventDefault();
+        if (game.isGameOver) game.resetGame();
+        else confirmAndRestart();
+        return;
+      }
+
+      if (game.isGameOver) return;
+
+      const isPlusKey = e.key === '+' || e.code === 'Equal' || e.code === 'NumpadAdd';
+      const isMinusKey = e.key === '-' || e.code === 'Minus' || e.code === 'NumpadSubtract';
+      // '+' needs Shift on many layouts, so Shift doesn't multiply the +/- keys
+      const amount = e.altKey ? 10 : e.shiftKey && !isPlusKey && !isMinusKey ? 5 : 1;
+
+      if (e.code === 'ArrowDown' || e.code === 'KeyS' || isMinusKey) {
+        e.preventDefault();
+        game.applyOpponentHealthChange(-amount);
+        return;
+      }
+
+      if (e.code === 'ArrowUp' || e.code === 'KeyW' || isPlusKey) {
+        e.preventDefault();
+        game.applyOpponentHealthChange(amount);
+        return;
+      }
+
+      if (e.code === 'KeyE' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        game.triggerEvent();
+        return;
+      }
+
+      if (e.code === 'KeyB' && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         onOpenStats();
-        return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    applyOpponentHealthChange,
-    nextTurn,
-    triggerEvent,
-    resetGame,
-    currentDrawnCard,
-    closeDrawnCard,
-    turnPhase,
-    opponentTurnState,
-    advanceOpponentPhase,
-    endOpponentTurn,
-    onOpenHelp,
-    onOpenSettings,
-    onOpenStats,
-    onCloseAnyModal,
-    hasOpenModal,
-  ]);
+  }, []);
 };

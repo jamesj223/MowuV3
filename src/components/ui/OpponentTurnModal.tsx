@@ -1,7 +1,9 @@
 import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
+import { totalAttackPower as sumAttackPower } from '@/logic/game';
 import { Swords, Sparkles, Coffee, ChevronRight, Skull } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 export const OpponentTurnModal: React.FC = () => {
   const {
@@ -11,7 +13,16 @@ export const OpponentTurnModal: React.FC = () => {
     advanceOpponentPhase,
     endOpponentTurn,
     currentDrawnCard,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      opponentTurnState: s.opponentTurnState,
+      opponentCommander: s.opponentCommander,
+      turn: s.turn,
+      advanceOpponentPhase: s.advanceOpponentPhase,
+      endOpponentTurn: s.endOpponentTurn,
+      currentDrawnCard: s.currentDrawnCard,
+    })),
+  );
 
   if (!opponentTurnState) return null;
 
@@ -56,7 +67,8 @@ export const OpponentTurnModal: React.FC = () => {
     return 'Continue to Your Turn';
   };
 
-  const totalAttackPower = attackers.reduce((sum, a) => sum + a.power, 0);
+  const totalAttackPower = sumAttackPower(attackers);
+  const attackerCount = attackers.reduce((sum, a) => sum + a.count, 0);
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
@@ -136,7 +148,7 @@ export const OpponentTurnModal: React.FC = () => {
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-bold text-rose-300 flex items-center gap-2">
                     <Swords className="w-4 h-4" />
-                    {attackers.length} creature{attackers.length !== 1 ? 's' : ''} attacking!
+                    {attackerCount} creature{attackerCount !== 1 ? 's' : ''} attacking!
                   </p>
                   <span className="text-xs font-mono text-rose-400 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30">
                     {totalAttackPower} total power
@@ -154,7 +166,12 @@ export const OpponentTurnModal: React.FC = () => {
                           <Skull className="w-4 h-4 text-rose-400" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white">{attacker.name}</p>
+                          <p className="text-sm font-bold text-white">
+                            {attacker.name}
+                            {attacker.count > 1 && (
+                              <span className="ml-1 font-mono text-rose-300">×{attacker.count}</span>
+                            )}
+                          </p>
                           {attacker.keywords && (
                             <p className="text-[10px] text-neutral-400 font-mono">
                               {attacker.keywords}

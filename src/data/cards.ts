@@ -16,7 +16,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     id: 'homing-fireball-pigeon',
     name: 'Homing Fireball Pigeon',
     manaCost: '{1}{R}',
-    typeLine: 'Creature — Bird Elemental',
+    typeLine: 'Kindred Sorcery — Bird Elemental',
     artFile: 'homing-fireball-pigeon.png',
     category: 'removal',
     isPermanent: false,
@@ -168,7 +168,8 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     minTurn: 3,
     basePower: 3,
     baseToughness: 3,
-    initialCounters: 1,
+    initialCounters: 0,
+    counterType: 'plus-one',
     flavorText: 'A very good boy who demands his treat taxes promptly.',
     templateText: 'Haste, Vigilance.\nWhenever you cast your second spell each turn, Mowu gains +1/+1 and you lose 2 life.',
     computeStats: () => ({
@@ -189,14 +190,16 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     initialCounters: 1,
+    counterType: 'swarm',
     flavorText: 'Buzzing with concentrated infect.',
     templateText: 'Haste, Flying, Toxic 1.\nMust attack each combat if able.',
     computeStats: (turn, bracket) => {
       const count = bracket === 'b4' || turn >= 6 ? 2 : 1;
       return {
-        renderedText: `Haste, Flying, Toxic 1 (Player takes 1 poison counter if unblocked).\nMust attack each combat if able. (Swarm Count: ${count})`,
+        renderedText: 'Haste, Flying, Toxic 1 (Player takes 1 poison counter if unblocked).\nMust attack each combat if able. Counters show the swarm size; each mosquito attacks separately.',
         power: 1,
         toughness: 1,
+        counters: count,
       };
     },
   },

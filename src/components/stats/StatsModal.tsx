@@ -13,6 +13,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import { useShallow } from 'zustand/react/shallow';
 import {
   X,
   BarChart3,
@@ -27,35 +28,53 @@ interface StatsModalProps {
 }
 
 export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
-  const { matches, exportData, importData, clearHistory, deleteMatch } = useDeckStore();
-  const { turnSnapshots, currentDeckName } = useGameStore();
+  const {
+    matches,
+    exportData,
+    importData,
+    clearHistory,
+    deleteMatch,
+  } = useDeckStore(
+    useShallow((s) => ({
+      matches: s.matches,
+      exportData: s.exportData,
+      importData: s.importData,
+      clearHistory: s.clearHistory,
+      deleteMatch: s.deleteMatch,
+    })),
+  );
+  const { turnSnapshots, currentDeckName } = useGameStore(
+    useShallow((s) => ({ turnSnapshots: s.turnSnapshots, currentDeckName: s.currentDeckName })),
+  );
 
   const [activeTab, setActiveTab] = useState<'current' | 'history' | 'decks'>('current');
   const [importStatus, setImportStatus] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  // Compute deck benchmarks
+  // Compute deck benchmarks (turn/damage averages only count wins)
   const deckStats: Record<
     string,
-    { count: number; fastest: number; avgTurns: number; avgDamage: number }
+    { wins: number; losses: number; fastest: number; avgTurns: number; avgDamage: number }
   > = {};
 
   matches.forEach((m) => {
     const name = m.deckName || 'Unnamed Deck';
-    if (!deckStats[name]) {
-      deckStats[name] = { count: 0, fastest: Infinity, avgTurns: 0, avgDamage: 0 };
+    deckStats[name] ??= { wins: 0, losses: 0, fastest: Infinity, avgTurns: 0, avgDamage: 0 };
+    const stats = deckStats[name];
+    if (!m.won) {
+      stats.losses += 1;
+      return;
     }
-    deckStats[name].count += 1;
-    deckStats[name].fastest = Math.min(deckStats[name].fastest, m.turns);
-    deckStats[name].avgTurns += m.turns;
-    deckStats[name].avgDamage += m.damageDealt;
+    stats.wins += 1;
+    stats.fastest = Math.min(stats.fastest, m.turns);
+    stats.avgTurns += m.turns;
+    stats.avgDamage += m.damageDealt;
   });
 
   Object.values(deckStats).forEach((s) => {
-    s.avgTurns = Math.round((s.avgTurns / s.count) * 10) / 10;
-    s.avgDamage = Math.round(s.avgDamage / s.count);
-    if (s.fastest === Infinity) s.fastest = 0;
+    s.avgTurns = s.wins ? Math.round((s.avgTurns / s.wins) * 10) / 10 : 0;
+    s.avgDamage = s.wins ? Math.round(s.avgDamage / s.wins) : 0;
   });
 
   const handleExport = () => {
@@ -76,6 +95,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
     reader.onload = (event) => {
       const content = event.target?.result as string;
       const success = importData(content);
+      e.target.value = ''; // allow re-importing the same file
       setImportStatus(success ? 'Data restored successfully!' : 'Invalid backup JSON file.');
       setTimeout(() => setImportStatus(null), 3000);
     };
@@ -251,7 +271,12 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                     >
                       <div>
                         <h4 className="font-bold text-white text-base">{deck}</h4>
-                        <p className="text-xs text-neutral-500">{stats.count} games recorded</p>
+                        <p className="text-xs text-neutral-500">
+                          {stats.wins + stats.losses} games recorded •{' '}
+                          <span className="text-emerald-400">{stats.wins}W</span>
+                          {' – '}
+                          <span className="text-rose-400">{stats.losses}L</span>
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-neutral-800 text-center">
@@ -260,7 +285,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                             Fastest Win
                           </span>
                           <p className="text-lg font-mono font-bold text-emerald-400">
-                            T{stats.fastest}
+                            {stats.wins ? `T${stats.fastest}` : '—'}
                           </p>
                         </div>
                         <div>
@@ -268,7 +293,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                             Avg Turns
                           </span>
                           <p className="text-lg font-mono font-bold text-amber-400">
-                            {stats.avgTurns}
+                            {stats.wins ? stats.avgTurns : '—'}
                           </p>
                         </div>
                         <div>
@@ -276,7 +301,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                             Avg Dmg
                           </span>
                           <p className="text-lg font-mono font-bold text-sky-400">
-                            {stats.avgDamage}
+                            {stats.wins ? stats.avgDamage : '—'}
                           </p>
                         </div>
                       </div>
@@ -290,10 +315,12 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
           {activeTab === 'history' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-neutral-200">Recent Completed Games</h3>
+                <h3 className="text-sm font-semibold text-neutral-200">Recent Games</h3>
                 {matches.length > 0 && (
                   <button
-                    onClick={clearHistory}
+                    onClick={() => {
+                      if (window.confirm('Delete all match history? This cannot be undone.')) clearHistory();
+                    }}
                     className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -328,9 +355,15 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
 
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className="text-sm font-mono font-bold text-emerald-400">
-                              Won in {m.turns} turns
-                            </p>
+                            {m.won ? (
+                              <p className="text-sm font-mono font-bold text-emerald-400">
+                                Won in {m.turns} turns
+                              </p>
+                            ) : (
+                              <p className="text-sm font-mono font-bold text-rose-400">
+                                Conceded on turn {m.turns}
+                              </p>
+                            )}
                             <p className="text-xs text-neutral-400">
                               {m.damageDealt} total damage dealt
                             </p>
@@ -338,6 +371,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
 
                           <button
                             onClick={() => deleteMatch(m.id)}
+                            aria-label="Delete entry"
                             className="p-1 rounded text-neutral-600 hover:text-rose-400 transition-colors"
                             title="Delete entry"
                           >

@@ -1,5 +1,7 @@
 export type CommanderBracket = 'b1' | 'b2' | 'b3' | 'b4' | 'custom' | 'off';
 
+export type WinReason = 'life' | 'poison' | 'commander_damage';
+
 export interface BracketConfig {
   id: CommanderBracket;
   name: string;
@@ -95,10 +97,10 @@ export interface MatchRecord {
   finalHealth: number;
   damageDealt: number;
   bracket: CommanderBracket;
-  winReason?: 'life' | 'poison' | 'commander_damage';
+  winReason?: WinReason;           // only set for wins
   timestamp: string;
   eventCount: number;
-  won: boolean;
+  won: boolean;                    // false = conceded / lost
 }
 
 export interface DeckProfile {

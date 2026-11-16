@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { Navbar } from '@/components/ui/Navbar';
@@ -8,12 +8,17 @@ import { PlayerTracker } from '@/components/counters/PlayerTracker';
 import { BattlefieldZone } from '@/components/events/BattlefieldZone';
 import { CardModal } from '@/components/cards/CardModal';
 import { NewGameModal } from '@/components/ui/NewGameModal';
-import { StatsModal } from '@/components/stats/StatsModal';
 import { HelpModal } from '@/components/ui/HelpModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
 import { OpponentTurnModal } from '@/components/ui/OpponentTurnModal';
 import { Keyboard } from 'lucide-react';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
+
+// Charts (recharts) are heavy: only load them when the stats modal is first opened
+const StatsModal = lazy(() =>
+  import('@/components/stats/StatsModal').then((m) => ({ default: m.StatsModal })),
+);
+import { useShallow } from 'zustand/react/shallow';
 
 export const App: React.FC = () => {
   const {
@@ -23,7 +28,18 @@ export const App: React.FC = () => {
     resetGame,
     opponentTurnState,
     turnPhase,
-  } = useGameStore();
+    gameStartTime,
+  } = useGameStore(
+    useShallow((s) => ({
+      isGameOver: s.isGameOver,
+      currentDrawnCard: s.currentDrawnCard,
+      closeDrawnCard: s.closeDrawnCard,
+      resetGame: s.resetGame,
+      opponentTurnState: s.opponentTurnState,
+      turnPhase: s.turnPhase,
+      gameStartTime: s.gameStartTime,
+    })),
+  );
 
   const [isNewGameOpen, setIsNewGameOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
@@ -93,35 +109,35 @@ export const App: React.FC = () => {
             <Keyboard className="w-4 h-4 text-neutral-500" />
             <span className="flex items-center gap-1.5 flex-wrap justify-center">
               <span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-800 text-[10px] text-neutral-300 font-mono">
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-700 text-[10px] text-neutral-300 font-mono">
                   Space
                 </kbd>{' '}
                 Next Turn
               </span>
               <span>•</span>
               <span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-800 text-[10px] text-neutral-300 font-mono">
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-700 text-[10px] text-neutral-300 font-mono">
                   S / Down
                 </kbd>{' '}
                 Deal Damage
               </span>
               <span>•</span>
               <span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-800 text-[10px] text-neutral-300 font-mono">
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-700 text-[10px] text-neutral-300 font-mono">
                   W / Up
                 </kbd>{' '}
                 Heal / Rollback
               </span>
               <span>•</span>
               <span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-800 text-[10px] text-neutral-300 font-mono">
-                  Ctrl+Q
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-700 text-[10px] text-neutral-300 font-mono">
+                  Shift+R
                 </kbd>{' '}
                 Restart
               </span>
               <span>•</span>
               <span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-800 text-[10px] text-neutral-300 font-mono">
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-850 border border-neutral-700 text-[10px] text-neutral-300 font-mono">
                   ?
                 </kbd>{' '}
                 Hotkeys
@@ -153,21 +169,27 @@ export const App: React.FC = () => {
       {/* Opponent Turn Modal */}
       <OpponentTurnModal />
 
+      {/* Keyed by game so per-game state ("saved") resets for each new game */}
       <GameOverModal
+        key={gameStartTime}
         isOpen={isGameOver}
         onRestart={resetGame}
         onNewGame={() => setIsNewGameOpen(true)}
       />
 
-      <NewGameModal
-        isOpen={isNewGameOpen}
-        onClose={() => setIsNewGameOpen(false)}
-      />
+      {/* Mounted only while open so the form re-reads the current settings each time */}
+      {isNewGameOpen && (
+        <NewGameModal
+          isOpen
+          onClose={() => setIsNewGameOpen(false)}
+        />
+      )}
 
-      <StatsModal
-        isOpen={isStatsOpen}
-        onClose={() => setIsStatsOpen(false)}
-      />
+      {isStatsOpen && (
+        <Suspense fallback={null}>
+          <StatsModal isOpen onClose={() => setIsStatsOpen(false)} />
+        </Suspense>
+      )}
 
       <HelpModal
         isOpen={isHelpOpen}

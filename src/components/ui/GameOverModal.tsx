@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
+import { buildMatchRecord } from '@/logic/game';
 import { Trophy, RotateCcw, Play, CheckCircle2, Biohazard, Crown } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 interface GameOverModalProps {
   isOpen: boolean;
@@ -11,39 +13,26 @@ interface GameOverModalProps {
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame, onRestart }) => {
-  const {
-    turn,
-    opponentHealth,
-    startingOpponentHealth,
-    totalDamageDealt,
-    currentDeckName,
-    bracket,
-    winReason,
-    eventHistory,
-    activePermanents,
-  } = useGameStore();
+  const { turn, totalDamageDealt, bracket, winReason, eventsTriggered } = useGameStore(
+    useShallow((s) => ({
+      turn: s.turn,
+      totalDamageDealt: s.totalDamageDealt,
+      bracket: s.bracket,
+      winReason: s.winReason,
+      eventsTriggered: s.eventsTriggered,
+    })),
+  );
 
-  const { recordMatch } = useDeckStore();
+  const recordMatch = useDeckStore((s) => s.recordMatch);
   const [saved, setSaved] = useState(false);
 
   if (!isOpen) return null;
 
-  const totalEvents = eventHistory.length + activePermanents.length;
   const bracketConfig = COMMANDER_BRACKETS[bracket];
 
   const handleSave = () => {
     if (saved) return;
-    recordMatch({
-      deckName: currentDeckName || 'Unnamed Deck',
-      turns: turn,
-      startingHealth: startingOpponentHealth,
-      finalHealth: opponentHealth,
-      damageDealt: totalDamageDealt,
-      bracket,
-      winReason: winReason || 'life',
-      eventCount: totalEvents,
-      won: true,
-    });
+    recordMatch(buildMatchRecord(useGameStore.getState(), true));
     setSaved(true);
   };
 
@@ -92,7 +81,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
           </div>
           <div>
             <span className="text-[10px] uppercase font-mono text-neutral-500">Events Survived</span>
-            <p className="text-2xl font-extrabold font-mono text-sky-400">{totalEvents}</p>
+            <p className="text-2xl font-extrabold font-mono text-sky-400">{eventsTriggered}</p>
           </div>
         </div>
 
