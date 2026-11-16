@@ -17,7 +17,8 @@
 
 ## ADR-004: Multi-Model Handoff & Continuity Architecture
 - **Date**: 2026-10-07
-- **Decision**: Maintain clear state documentation in `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/ROADMAP.md` in the repository root. All application code lives in `mowu-v3/` with TypeScript types and modular Zustand stores.
+- **Decision**: Maintain clear state documentation in `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/ROADMAP.md`. All application code lives in `mowu-v3/` with TypeScript types and modular Zustand stores.
+- **Update (2026-11)**: `docs/` now lives *inside* the `mowu-v3` git repository so it is versioned and visible to any agent working on the repo.
 - **Rationale**: Ensures any model in the free tier rotation can immediately read the project state, run commands, and continue implementation without loss of context.
 
 ## ADR-005: Opponent Health (Countdown) & Native Lifegain
@@ -30,7 +31,7 @@
 - **Decision**: Implement the V1 debounced floating delta indicator. Mashing buttons or hotkeys (e.g. 17 times) accumulates in real-time (`-1`, `-2`, ..., `-17`) with high-contrast color styling (green for healing, red for damage). A 1.5s timer resets on each keypress; when user stops typing, it smoothly fades out and resets to 0.
 - **Rationale**: User explicitly relies on this feedback to deal exact burst amounts during combat calculation without manual mental arithmetic.
 
-## ADR-007: Commander Bracket System (Brackets 1–4)
+## ADR-007: Commander Bracket System (Brackets 1–4) — *superseded by Phase 2 (5 brackets)*
 - **Date**: 2026-10-07
 - **Decision**: Replace generic difficulty levels with the official MTG Commander Bracket System:
   - **Bracket 1 (Exhibition / Precon)**: Benchmark 10–13 turns, event frequency every 6 turns, mild disruption (chump blockers, small taxes).
@@ -61,7 +62,7 @@
 
 ## ADR-011: Long-Press & Rapid Step (Replace ±5 with Clean ±1 / Hold for 10)
 - **Date**: 2026-10-07
-- **Decision**: Replace cluttered button arrays (`-10, -5, -1, +1, +5`) with sleek, prominent `[-1]` and `[+1]` buttons. Single click = ±1; Long-press / hold (>400ms) = auto-repeats / jumps by ±10. Keyboard retains `Ctrl` modifier for ±10.
+- **Decision**: Replace cluttered button arrays (`-10, -5, -1, +1, +5`) with sleek, prominent `[-1]` and `[+1]` buttons. Single click = ±1; Long-press / hold (>400ms) = auto-repeats / jumps by ±10. Keyboard uses `Alt` for ±10 (see ADR-014; `Ctrl` was dropped).
 - **Rationale**: Vastly cleaner UI footprint while preserving rapid combat math and the V1 mashable feel.
 
 ## ADR-012: On-Demand Alt-Win Trackers (3-Opponent Poison & Commander Damage)
@@ -72,3 +73,23 @@
 - **Rationale**: Accurately simulates the rules of Commander where Infect and Voltron require taking out 3 separate opponents rather than a single pool.
 
 
+
+## ADR-013: Damage Is Recorded Immediately; the Delta Badge Is Display-Only
+- **Date**: 2026-11-16
+- **Decision**: Damage counts toward `totalDamageDealt` and the current turn's snapshot the moment it is dealt. The 1.6s debounce (ADR-006) now only controls the floating delta badge. A manual heal (+ / W / Up) is a *rollback* that undoes at most the damage dealt this turn; opponent life gain from event cards changes life only and never reduces damage stats.
+- **Rationale**: The debounced bookkeeping lost the killing blow on the victory screen, credited damage to the wrong turn when ending a turn quickly, and let opponent lifegain erase the player's damage.
+
+## ADR-014: Hotkeys Avoid Ctrl/Cmd
+- **Date**: 2026-11-16
+- **Decision**: `Shift` = ×5, `Alt` = ×10, `Shift+R` = restart (asks first if a game is in progress), `E` = trigger event. Ctrl/Cmd combos are left to the browser. Letter keys use `event.code` so they work across layouts and with Alt on macOS. Board hotkeys are ignored while a dialog is open or after game over.
+- **Rationale**: Browsers don't let pages intercept Ctrl+W (close tab) or Ctrl+Q (quit, Firefox on Linux/Windows), so the old Ctrl+W (+10 heal) and Ctrl+Q (restart) closed the app.
+
+## ADR-015: Pure Game Logic Module + Tests
+- **Date**: 2026-11-16
+- **Decision**: Game rules (victory checks, attackers, summoning sickness, counters, damage bookkeeping, card eligibility, weighted picks) live in `src/logic/game.ts` as pure functions with Vitest tests. Stores call into it. CI runs lint, tests and build.
+- **Rationale**: Every agent handoff so far has introduced regressions that a test suite would have caught (including a broken build).
+
+## ADR-016: Counter Types
+- **Date**: 2026-11-16
+- **Decision**: Cards declare a `counterType`: `'plus-one'` (+1/+1 counters added to P/T) or `'swarm'` (number of bodies; each attacks). Cards without one show no counter controls.
+- **Rationale**: ADR/feedback item 6 left counter meaning up to the user, so counters never affected combat.

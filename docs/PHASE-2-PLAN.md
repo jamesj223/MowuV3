@@ -93,7 +93,12 @@ Replace the single static Chump Blocker with a flavorful pool of 7 blockers:
 
 ## Implementation Roadmap
 
-- [ ] **Batch 1: Quick Fixes & Polish** (Card art preloading, 5s idle progress bar, Tax Collector counter fix, commander card deduplication)
-- [ ] **Batch 2: 5-Bracket System** (Update types, constants, NewGameModal layout, TurnCounter badges)
-- [ ] **Batch 3: Commander Roster & B1 Gimmick** (Add Gimmick Mowu, rebalance bracket assignments)
-- [ ] **Batch 4: Chump Blocker Expansion** (Add additional blocker definitions to `cards.ts`)
+- [x] **Batch 1: Quick Fixes & Polish** (Card art preloading, 5s idle progress bar, Tax Collector counter fix, commander card deduplication)
+- [x] **Batch 2: 5-Bracket System** (Update types, constants, NewGameModal layout, TurnCounter badges)
+- [x] **Batch 3: Commander Roster & B1 Gimmick** (Add Gimmick Mowu, rebalance bracket assignments)
+- [x] **Batch 4: Chump Blocker Expansion** (Add additional blocker definitions to `cards.ts`)
+
+> **Status:** Implemented on `feat/phase-2`, then merged with the bug-fix branch and tested
+> (unit tests + browser playthrough). The idle auto-skip was rewritten as `src/hooks/useIdleAutoSkip.ts`
+> (the original broke React's rules of hooks). Open question: the bracket **target turns** above
+> are not yet verified against Wizards' official guidance (see the "Open questions" section of `ROADMAP.md`).

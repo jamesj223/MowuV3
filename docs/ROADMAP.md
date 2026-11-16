@@ -6,15 +6,14 @@
 ---
 
 ## Current Handoff Status
-- **Current State**: Widescreen layout maximization, streamlined in-play cards, long-press/hold-to-repeat buttons, and on-demand 3-opponent Infect/Commander Damage tracks are fully implemented and verified.
-- **Key Enhancements Implemented in Response to Feedback**:
-  1. **Expansive Widescreen Stage**: Expanded container up to 1850px, slimming down the side docks (`w-72 sm:w-80`) and dedicating 70%+ of the viewport to the Opponent Battlefield.
-  2. **Streamlined In-Play Battlefield Cards**: Created `variant="in_play"` mode that removes flavor text, set symbols, and mana headers from active tokens/permanents in play. Cards dynamically wrap in a responsive flex layout. Full details remain available on click via `variant="detailed"` modal.
-  3. **HoldButton (Click for ±1, Hold for ±10)**: Replaced cluttered `[-10, -5, -1, +1, +5]` buttons with clean `[-1]` and `[+1]` buttons that accelerate to ±10 when held (>350ms).
-  4. **On-Demand Alt-Win Tracks (3-Opponent Pod)**:
-     - Poison & Commander damage are hidden by default to keep the interface uncluttered.
-     - When playtesting Infect or Voltron, toggling them reveals **3 distinct virtual opponents** (Opponent 1, 2, 3) with individual tracks (0–10 poison, 0–21 commander damage). Reaching lethal on all 3 triggers victory!
-- **Verification**: `npm run build` completed with zero TypeScript or Vite errors.
+- **Current State (2026-11-16)**: Phase 2 (5 brackets, commander roster, chump blocker pack, idle auto-skip, art preloading) merged with a bug-fix pass. See `DECISIONS.md` ADR-013 to ADR-016 for what changed and why.
+- **Verification**: `npm run lint`, `npm test` and `npm run build` all pass (also run in CI); main flows checked in a browser.
+- **Docs**: the app README (`README.md`) covers hotkeys, project layout and how to add a card.
+
+### Open questions
+1. **Bracket target turns.** The current values (11–14+, 8–10, 6–8, 4–6, 2–4) came from earlier LLM sessions. Secondary summaries of Wizards' Oct 2025 Commander Brackets update give roughly 9 / 8 / 6 / 4 / any turn; this needs checking against the official article before changing.
+2. **Card scaling.** The per-bracket multipliers and formulas in `src/data/cards.ts` are untuned guesses. Intended feel: between solitaire goldfishing and a Forge/Arena-style bot; on B2+ the bot should usually do *something* each turn. Needs a design pass plus playtesting: which events suit which turn/bracket/deck, and how strongly they scale.
+3. **Help text** still claims difficulty "matches the official MTG Commander Brackets"; reword once 1 and 2 are settled.
 
 ---
 
