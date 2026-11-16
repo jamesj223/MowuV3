@@ -7,6 +7,7 @@ import {
   extractKeywords,
   getAttackers,
   getEffectiveStats,
+  getEligibleCards,
   getEventFrequency,
   hasKeyword,
   isEventTurn,
@@ -16,6 +17,7 @@ import {
 } from './game';
 import { EVENT_CARDS } from '@/data/cards';
 import type { ActivePermanent } from '@/types/card';
+import { COMMANDER_BRACKETS, type CommanderBracket } from '@/types/game';
 
 const perm = (overrides: Partial<ActivePermanent> = {}): ActivePermanent => ({
   instanceId: 'p1',
@@ -146,6 +148,26 @@ describe('pickWeightedCard', () => {
   });
 });
 
+describe('getEligibleCards', () => {
+  const tax = EVENT_CARDS.find((c) => c.id === 'tax-collector-mowu')!;
+
+  it('only lets a signature card appear for its own commander', () => {
+    expect(tax.signatureCommanderId).toBe('tax-collector');
+    expect(getEligibleCards(EVENT_CARDS, 10, 'mecha')).not.toContain(tax);
+    expect(getEligibleCards(EVENT_CARDS, 10, undefined)).not.toContain(tax);
+    expect(getEligibleCards(EVENT_CARDS, 10, 'tax-collector')).toContain(tax);
+  });
+
+  it('respects minimum turns', () => {
+    expect(getEligibleCards(EVENT_CARDS, 1, undefined).every((c) => (c.minTurn ?? 1) <= 1)).toBe(true);
+  });
+
+  it('falls back instead of returning nothing', () => {
+    expect(getEligibleCards([tax], 1, 'mecha')).toEqual([tax]);
+    expect(getEligibleCards([tax], 1, 'tax-collector')).toEqual([tax]);
+  });
+});
+
 describe('applyHealthChange', () => {
   const base = () => ({
     opponentHealth: 100,
@@ -236,7 +258,7 @@ describe('card data', () => {
 
   it('computes stats for every bracket and turn without throwing', () => {
     for (const card of EVENT_CARDS) {
-      for (const bracket of ['b1', 'b2', 'b3', 'b4', 'custom', 'off'] as const) {
+      for (const bracket of Object.keys(COMMANDER_BRACKETS) as CommanderBracket[]) {
         for (const turn of [1, 5, 12]) {
           const stats = card.computeStats(turn, bracket);
           expect(stats.renderedText.length, card.id).toBeGreaterThan(0);

@@ -13,6 +13,7 @@ import {
   checkVictory,
   createSnapshot,
   getAttackers,
+  getEligibleCards,
   getEventFrequency,
   isEventTurn,
   pickWeightedCard,
@@ -380,8 +381,7 @@ export const useGameStore = create<GameStoreState>()(
 
         triggerEvent: (forceCardId) => {
           const state = get();
-          let eligible = EVENT_CARDS.filter((c) => (c.minTurn ?? 1) <= state.turn);
-          if (eligible.length === 0) eligible = EVENT_CARDS;
+          const eligible = getEligibleCards(EVENT_CARDS, state.turn, state.opponentCommander?.id);
 
           const forced = forceCardId ? EVENT_CARDS.find((c) => c.id === forceCardId) : undefined;
           const cardDef =

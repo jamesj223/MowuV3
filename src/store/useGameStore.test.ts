@@ -101,6 +101,10 @@ describe('parseMatch', () => {
     expect(parseMatch(valid)).toEqual(valid);
   });
 
+  it('accepts every current bracket, including Bracket 5', () => {
+    expect(parseMatch({ ...valid, bracket: 'b5' })?.bracket).toBe('b5');
+  });
+
   it('rejects malformed records', () => {
     expect(parseMatch({ ...valid, turns: '7' })).toBeNull();
     expect(parseMatch({ ...valid, bracket: 'b9' })).toBeNull();

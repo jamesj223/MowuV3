@@ -1,0 +1,74 @@
+# Architectural Decision Records (ADRs)
+
+## ADR-001: Target Opponent Damage Tracking
+- **Date**: 2026-10-07
+- **Decision**: Default to a single unified opponent damage target of 120 (simulating 3 opponents at 40 life each in Commander), with configurable targets (e.g. 40 for 1v1, or custom).
+- **Rationale**: User confirmed a single combined target is cleaner and more effective for playtesting than micromanaging 3 separate life pools, while acknowledging 120 represents a typical 4-player pod.
+
+## ADR-002: Optional Player Tracker
+- **Date**: 2026-10-07
+- **Decision**: Include an optional Player Tracker showing Player Life (default 40), Poison counters (0–10), and Commander Damage (0–21). Can be collapsed or expanded based on player preference.
+- **Rationale**: Many goldfish events (creature tokens attacking, poison tokens, life drains) require tracking player survival to test deck resilience.
+
+## ADR-003: Hybrid Dynamic Card Frame with User-Editable PNG Artwork
+- **Date**: 2026-10-07
+- **Decision**: Implement a custom MTG / Playtest card component in CSS/SVG. Card rules text and stats (e.g. `{X}` damage, `{N}` tokens) are dynamically calculated by difficulty and turn count. Artwork is loaded from static PNG files in `/public/cards/` (e.g., `homing-fireball-pigeon.png`) which the user can directly create and paint in MS Paint. Fallback to doodle SVGs if image is not yet drawn.
+- **Rationale**: Combines the best of both worlds: dynamic mechanical scaling by game state + charming homemade MS Paint aesthetics.
+
+## ADR-004: Multi-Model Handoff & Continuity Architecture
+- **Date**: 2026-10-07
+- **Decision**: Maintain clear state documentation in `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/ROADMAP.md` in the repository root. All application code lives in `mowu-v3/` with TypeScript types and modular Zustand stores.
+- **Rationale**: Ensures any model in the free tier rotation can immediately read the project state, run commands, and continue implementation without loss of context.
+
+## ADR-005: Opponent Health (Countdown) & Native Lifegain
+- **Date**: 2026-10-07
+- **Decision**: Switch primary counter from "Damage Dealt (0 to 120)" to **Opponent Health** (starts at 120 or 40, counts down to 0). Dealing damage reduces health; opponent lifegain cards (e.g. *Suspicious Meat Pie*) naturally heal opponent health (+5). Total damage dealt is retained as a tracked metric for analytics.
+- **Rationale**: MTG opponents have life totals, not damage caps. Counting down to 0 is standard MTG UX and naturally accommodates lifegain without modifying damage ceilings.
+
+## ADR-006: Debounced Floating Delta Accumulator (V1 Restoration)
+- **Date**: 2026-10-07
+- **Decision**: Implement the V1 debounced floating delta indicator. Mashing buttons or hotkeys (e.g. 17 times) accumulates in real-time (`-1`, `-2`, ..., `-17`) with high-contrast color styling (green for healing, red for damage). A 1.5s timer resets on each keypress; when user stops typing, it smoothly fades out and resets to 0.
+- **Rationale**: User explicitly relies on this feedback to deal exact burst amounts during combat calculation without manual mental arithmetic.
+
+## ADR-007: Commander Bracket System (Brackets 1–4)
+- **Date**: 2026-10-07
+- **Decision**: Replace generic difficulty levels with the official MTG Commander Bracket System:
+  - **Bracket 1 (Exhibition / Precon)**: Benchmark 10–13 turns, event frequency every 6 turns, mild disruption (chump blockers, small taxes).
+  - **Bracket 2 (Core / Casual)**: Benchmark 8–10 turns, event frequency every 4 turns, standard wipes & mid blockers.
+  - **Bracket 3 (Optimized Casual)**: Benchmark 5–7 turns, event frequency every 3 turns, aggressive clocks & high interaction.
+  - **Bracket 4 (cEDH / High Power)**: Benchmark 3–5 turns, event frequency every 2 turns, ruthless stax & early wipes.
+  - **Custom / Off**: Fully manual or disabled events.
+- **Rationale**: Aligns directly with modern Commander deckbuilding standards and provides clear game-length targets for playtesting.
+
+## ADR-008: 3-Column Cockpit / Playmat Layout
+- **Date**: 2026-10-07
+- **Decision**: Redesign page structure from stacked cards into a 3-column MTG cockpit:
+  - **Left Wing**: Opponent Health & Tactile Pad with the debounced floating delta.
+  - **Center Stage**: The Opponent Battlefield (active cards, tokens, and spell drawer) with its own internal scroll so adding cards never displaces controls off screen.
+  - **Right Wing**: Turn Engine (current turn, big Next Turn button, bracket badge) and Player Status (Life, Poison, Commander damage).
+  - Responsive collapse for mobile with quick access bar.
+- **Rationale**: Prevents battlefield card expansion from pushing controls off screen and mirrors digital MTG playmat conventions.
+
+## ADR-009: Expansive Widescreen & Sleek HUD Real Estate
+- **Date**: 2026-10-07
+- **Decision**: Remove artificial max-width constraints on widescreen/desktop (expanding to 1920px max or fluid). Slim down the side docks so the Battlefield gets 70%+ of the viewport width.
+- **Rationale**: Goldfishing requires seeing active board states clearly without horizontal cramped feeling on modern monitors.
+
+## ADR-010: Streamlined In-Play Battlefield Cards
+- **Date**: 2026-10-07
+- **Decision**: In-play battlefield cards strip non-essential clutter (hide flavor text, set acronyms, and extraneous mana headers). Focus purely on Card Title, Art, Type line, Rules Text, and P/T box. Full details remain available in the click-to-zoom modal.
+- **Rationale**: Allows cards to scale cleanly and fit gracefully across multiple columns as the opponent plays more permanents.
+
+## ADR-011: Long-Press & Rapid Step (Replace ±5 with Clean ±1 / Hold for 10)
+- **Date**: 2026-10-07
+- **Decision**: Replace cluttered button arrays (`-10, -5, -1, +1, +5`) with sleek, prominent `[-1]` and `[+1]` buttons. Single click = ±1; Long-press / hold (>400ms) = auto-repeats / jumps by ±10. Keyboard retains `Ctrl` modifier for ±10.
+- **Rationale**: Vastly cleaner UI footprint while preserving rapid combat math and the V1 mashable feel.
+
+## ADR-012: On-Demand Alt-Win Trackers (3-Opponent Poison & Commander Damage)
+- **Date**: 2026-10-07
+- **Decision**: Default to hidden for Poison and Commander damage (both for player and opponent) to keep the primary view clean. When toggled on for playtesting Infect or Voltron decks:
+  - Tracks **Opponent Poison** across 3 virtual opponents (each with 0–10 counters). A pod opponent dies at 10 poison. Reaching 10 on all 3 wins the game!
+  - Tracks **Opponent Commander Damage** across 3 virtual opponents (each with 0–21 damage). Reaching 21 on all 3 wins the game!
+- **Rationale**: Accurately simulates the rules of Commander where Infect and Voltron require taking out 3 separate opponents rather than a single pool.
+
+

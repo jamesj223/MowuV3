@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CommanderBracket, DeckProfile, MatchRecord, WinReason } from '@/types/game';
+import { COMMANDER_BRACKETS } from '@/types/game';
 
 interface DeckStoreState {
   decks: DeckProfile[];
@@ -17,7 +18,7 @@ interface DeckStoreState {
   importData: (jsonData: string) => boolean;
 }
 
-const BRACKETS: readonly CommanderBracket[] = ['b1', 'b2', 'b3', 'b4', 'custom', 'off'];
+const BRACKETS = Object.keys(COMMANDER_BRACKETS) as CommanderBracket[];
 const WIN_REASONS: readonly WinReason[] = ['life', 'poison', 'commander_damage'];
 
 const makeId = (prefix: string) =>

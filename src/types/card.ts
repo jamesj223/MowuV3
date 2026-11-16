@@ -25,6 +25,7 @@ export interface EventCardDefinition {
   isPermanent: boolean;       // creatures & enchantments stay on battlefield
   minTurn?: number;           // turns before this can appear
   flavorText?: string;
+  signatureCommanderId?: string; // only this commander can cast this card
   basePower?: number;
   baseToughness?: number;
   initialCounters?: number;

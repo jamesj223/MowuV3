@@ -111,6 +111,24 @@ export const totalAttackPower = (attackers: AttackingCreature[]): number =>
   attackers.reduce((sum, a) => sum + a.power * a.count, 0);
 
 /**
+ * Cards the opponent may cast this turn: past their minimum turn, and signature
+ * cards (e.g. Tax Collector Mowu) only for the commander they belong to.
+ * Relaxes the turn requirement, then everything, rather than returning nothing.
+ */
+export const getEligibleCards = (
+  cards: EventCardDefinition[],
+  turn: number,
+  commanderId: string | undefined,
+): EventCardDefinition[] => {
+  const allowedForCommander = cards.filter(
+    (c) => !c.signatureCommanderId || c.signatureCommanderId === commanderId,
+  );
+  const eligible = allowedForCommander.filter((c) => (c.minTurn ?? 1) <= turn);
+  if (eligible.length > 0) return eligible;
+  return allowedForCommander.length > 0 ? allowedForCommander : cards;
+};
+
+/**
  * Weighted random pick. `random` must return a number in [0, 1).
  * Falls back to a uniform pick if every weight is zero.
  */
