@@ -117,3 +117,8 @@
 - **Date**: 2026-11-17
 - **Decision**: The victory screen shows the bracket, its official expected game length (minimum turns, e.g. "8+ turns") and the winning turn, with no wording or colour judgement. Supersedes the "faster than this bracket expects" message from ADR-017.
 - **Rationale**: Owner preference for neutral, matter-of-fact information; wins that are too fast and too slow are both visible. Wizards gives no upper bound, so no range is invented.
+
+## ADR-021: Command Zone Rules for Mowu's Commander
+- **Date**: 2026-11-17
+- **Decision**: Every Mowu has one commander card (`src/data/commanderCards.ts`), kept out of the random card pool. When it's in the command zone and Mowu can afford its mana value plus commander tax ({2} per previous cast), casting it is that turn's main play; cheaper extras may follow at B3–B5. It is never used as the every-turn fallback. A cast counts toward tax even if countered. If it leaves the battlefield (destroyed, Clear Board, countered) it returns to the command zone (derived: "on battlefield" = a permanent flagged `isCommander`). B1 commanders are vanilla; archetype text arrives with Batch 3 playbooks, within ADR-019 (no activated or command-zone abilities).
+- **Rationale**: Mirrors real Commander play closely enough to feel familiar (players recast commanders as soon as it's sensible) while keeping the planner simple. Commander damage is still applied by the player; attackers are tagged "Commander" to make that easy.

@@ -32,6 +32,13 @@ export const getManaValue = (manaCost: string): number => {
   return total;
 };
 
+/** MTG commander tax: {2} more for each previous cast from the command zone. */
+export const COMMANDER_TAX = 2;
+
+/** What Mowu's commander costs to cast right now. */
+export const getCommanderCost = (commanderCard: EventCardDefinition, timesCast: number): number =>
+  getManaValue(commanderCard.manaCost) + COMMANDER_TAX * timesCast;
+
 /** Mowu's mana for the turn: turn number plus bracket ramp, capped. */
 export const getManaBudget = (turn: number, bracket: CommanderBracket): number =>
   Math.min(MANA_BUDGET_CAP, Math.max(0, turn + rampFor(bracket, turn)));
@@ -47,6 +54,12 @@ export interface PlanInput {
   /** Cards Mowu cast recently, with the turn they were cast. */
   recentCasts: { cardId: string; turn: number }[];
   cards: EventCardDefinition[];
+  /** Mowu's commander, if he has one. Cast from the command zone when affordable. */
+  commander?: {
+    card: EventCardDefinition;
+    onBattlefield: boolean;
+    timesCast: number;
+  };
 }
 
 export interface TurnPlan {
@@ -62,8 +75,10 @@ const isLegendary = (c: EventCardDefinition) => /\bLegendary\b/.test(c.typeLine)
  * - Brackets that act every turn (B2–B5) always cast at least one card: if
  *   nothing fits the budget, the cheapest eligible card is cast anyway.
  * - Other brackets (B1, Custom) only act on their event cadence.
- * - One main play (biased toward spending the mana), then up to EXTRA_PLAYS
- *   cheaper cards with the mana left over.
+ * - If Mowu's commander is in the command zone and he can afford it (including
+ *   commander tax), casting it is the turn's main play.
+ * - Otherwise one main play (biased toward spending the mana).
+ * - Then up to EXTRA_PLAYS cheaper cards with the mana left over.
  */
 export const planOpponentTurn = (input: PlanInput, random: () => number): TurnPlan => {
   const budget = getManaBudget(input.turn, input.bracket);
@@ -87,19 +102,29 @@ export const planOpponentTurn = (input: PlanInput, random: () => number): TurnPl
   const mv = (c: EventCardDefinition) => getManaValue(c.manaCost);
   const affordable = eligible.filter((c) => mv(c) <= budget);
 
+  const commander = input.commander;
+  const commanderCost = commander ? getCommanderCost(commander.card, commander.timesCast) : Infinity;
+
   let main: EventCardDefinition;
-  if (affordable.length > 0) {
+  let mainCost: number;
+  if (commander && !commander.onBattlefield && commanderCost <= budget) {
+    main = commander.card;
+    mainCost = commanderCost;
+  } else if (affordable.length > 0) {
     main = pickWeighted(affordable, (c) => baseWeight(c) * (1 + BIG_PLAY_BIAS * mv(c)), random);
+    mainCost = mv(main);
   } else if (actsEveryTurn) {
     // Every-turn guarantee: cast the cheapest card even if it's over budget
+    // (never the commander: his tax is a real cost)
     const cheapest = Math.min(...eligible.map(mv));
     main = pickWeighted(eligible.filter((c) => mv(c) === cheapest), baseWeight, random);
+    mainCost = mv(main);
   } else {
     return { budget, plays: [] };
   }
 
   const plays = [main];
-  let remaining = budget - mv(main);
+  let remaining = budget - mainCost;
   const mainOnly = new Set<string>(MAIN_PLAY_ONLY_CATEGORIES);
 
   for (let i = 0; i < EXTRA_PLAYS[input.bracket]; i++) {
@@ -109,7 +134,7 @@ export const planOpponentTurn = (input: PlanInput, random: () => number): TurnPl
         !chosen.has(c.id) &&
         !mainOnly.has(c.category) &&
         mv(c) <= remaining &&
-        mv(c) <= Math.max(1, mv(main) - 1), // "cheaper" (1-drops always count)
+        mv(c) <= Math.max(1, mainCost - 1), // "cheaper" (1-drops always count)
     );
     if (candidates.length === 0) break;
     const extra = pickWeighted(candidates, baseWeight, random);

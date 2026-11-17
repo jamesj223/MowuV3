@@ -4,6 +4,8 @@ vi.mock('canvas-confetti', () => ({ default: vi.fn() }));
 
 import { useGameStore } from './useGameStore';
 import { parseMatch } from './useDeckStore';
+import { getCommanderCard } from '@/data/commanderCards';
+import { getManaValue } from '@/logic/opponent';
 
 const store = () => useGameStore.getState();
 
@@ -156,6 +158,61 @@ describe('opponent turns (Phase 3 engine)', () => {
       finishOpponentTurn();
     }
     throw new Error('Mowu never cast a permanent in 20 turns');
+  });
+});
+
+describe('commander zone', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  const finishOpponentTurn = () => {
+    for (let i = 0; i < 10 && store().turnPhase === 'opponent'; i++) store().advanceOpponentPhase();
+  };
+  const commanderOnBattlefield = () => store().activePermanents.find((p) => p.isCommander);
+
+  it('Mowu casts his commander once affordable, and recasts it with tax after it is destroyed', () => {
+    store().startNewGame({ startingOpponentHealth: 999, bracket: 'b2' });
+    const commander = store().opponentCommander!;
+    const card = getCommanderCard(commander.id)!;
+
+    let t = 0;
+    while (!commanderOnBattlefield() && t++ < 10) {
+      store().nextTurn();
+      finishOpponentTurn();
+    }
+    expect(commanderOnBattlefield()?.cardId).toBe(card.id);
+    expect(store().commanderTimesCast).toBe(1);
+    expect(store().turn - 1).toBe(Math.max(1, getManaValue(card.manaCost)));
+
+    // Destroy it: back to the command zone; next cast costs {2} more
+    store().dismissPermanent(commanderOnBattlefield()!.instanceId);
+    const destroyedOnTurn = store().turn;
+    t = 0;
+    while (!commanderOnBattlefield() && t++ < 10) {
+      store().nextTurn();
+      finishOpponentTurn();
+    }
+    expect(store().commanderTimesCast).toBe(2);
+    const recastTurn = store().turn - 1;
+    expect(recastTurn).toBeGreaterThanOrEqual(Math.max(destroyedOnTurn, getManaValue(card.manaCost) + 2));
+  });
+
+  it('countering the commander still counts toward commander tax', () => {
+    store().startNewGame({ startingOpponentHealth: 999, bracket: 'b2' });
+    for (let t = 0; t < 10; t++) {
+      store().nextTurn();
+      if (store().currentDrawnCard && 'isCommander' in store().currentDrawnCard! && (store().currentDrawnCard as { isCommander?: boolean }).isCommander) {
+        store().counterCurrentCard();
+        expect(commanderOnBattlefield()).toBeUndefined();
+        expect(store().commanderTimesCast).toBe(1);
+        return;
+      }
+      finishOpponentTurn();
+    }
+    throw new Error('Commander was never cast');
   });
 });
 

@@ -18,6 +18,10 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
   sickness unless they have Haste.
 - **Mowu commanders.** Each one biases which kinds of card appear (taxes, creatures, removal…) and has its own
   idle flavour text.
+- **Command zone.** Each Mowu has his own commander card. He casts it as soon as he can afford it; if you
+  destroy it (or it's countered), it goes back to the command zone and costs {2} more each time (commander
+  tax). The turn panel shows where it is and what it costs; on the battlefield it wears a crown, and in combat
+  it's tagged "Commander" so you know to track commander damage.
 - **Counters.** +1/+1 counters (e.g. Tax Collector Mowu) pump the creature. Swarm counters (Toxic Mosquito
   Swarm) set how many bodies attack.
 - **Stats.** The current game's life curve and damage per turn, per-deck benchmarks (wins/losses, fastest win,
@@ -91,6 +95,7 @@ src/
   store/               Zustand stores: live game + settings, decks + match history
   data/cards.ts        event card definitions and their bracket/turn scaling
   data/commanders.ts   Mowu commander variants, card weights and idle texts
+  data/commanderCards.ts  each Mowu's commander card
   components/          UI (counters, battlefield, modals, stats)
   hooks/useHotkeys.ts  keyboard shortcuts
 public/cards/          card art served at runtime (PNG)
@@ -103,7 +108,8 @@ art-src/               editable art source files (.pxd), not shipped in the buil
    enchantments stay on the battlefield), and write a `computeStats(turn, bracket)` that returns the rendered
    rules text plus any power/toughness, `healAmount` or starting `counters`. Set `counterType` if its counters mean
    something (`'plus-one'` or `'swarm'`).
-2. Drop the art into `public/cards/<artFile>`. Until you do, the card shows an "MS Paint" placeholder.
+2. Run `npm run placeholders` to create a blank canvas at `public/cards/<artFile>`, then paint over it
+   whenever you like. (The script reads every `artFile` in `src/data/` and never overwrites existing art.)
 3. Run `npm test`. The card-data tests check every card across all brackets and several turn numbers.
 
 ### Deploying under a sub-path

@@ -56,6 +56,7 @@ export interface ActivePermanent {
   counterType?: CounterType;
   turnPlayed: number;
   enteredOnOpponentTurn?: boolean; // for summoning sickness
+  isCommander?: boolean;           // Mowu's commander: returns to the command zone when it leaves
 }
 
 export interface ResolvedEvent {

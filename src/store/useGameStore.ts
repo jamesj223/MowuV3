@@ -5,6 +5,7 @@ import type { CommanderBracket, GameSettings, TurnSnapshot, WinReason } from '@/
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 import type { MowuCommander, OpponentTurnState } from '@/types/opponent';
 import { EVENT_CARDS } from '@/data/cards';
+import { findCardDefinition, getCommanderCard } from '@/data/commanderCards';
 import { pickRandomCommander, pickIdleText } from '@/data/commanders';
 import {
   COMMANDER_DAMAGE_LETHAL,
@@ -60,6 +61,8 @@ interface GameStoreState {
   // Opponent Turn System
   opponentCommander: MowuCommander | null;
   opponentTurnState: OpponentTurnState | null;
+  /** Times Mowu has cast his commander this game (drives commander tax). */
+  commanderTimesCast: number;
 
   // Player Counters
   playerLife: number;
@@ -152,6 +155,7 @@ const createFreshGame = (
     currentDrawnCard: null,
     opponentCommander: pickRandomCommander(settings.bracket),
     opponentTurnState: null,
+    commanderTimesCast: 0,
     turnSnapshots: [createSnapshot(1, settings.startingOpponentHealth, 0, now)],
   } satisfies Partial<GameStoreState>;
 };
@@ -177,6 +181,7 @@ const computeOpponentTurn = (state: GameStoreState): OpponentTurnState => {
     ...state.eventHistory.map((e) => ({ cardId: e.cardId, turn: e.turnResolved })),
     ...state.activePermanents.map((p) => ({ cardId: p.cardId, turn: p.turnPlayed })),
   ];
+  const commanderCard = getCommanderCard(state.opponentCommander?.id);
   const plan = planOpponentTurn(
     {
       turn: state.turn,
@@ -187,6 +192,13 @@ const computeOpponentTurn = (state: GameStoreState): OpponentTurnState => {
       battlefieldCardIds: state.activePermanents.map((p) => p.cardId),
       recentCasts,
       cards: EVENT_CARDS,
+      commander: commanderCard
+        ? {
+            card: commanderCard,
+            onBattlefield: state.activePermanents.some((p) => p.isCommander),
+            timesCast: state.commanderTimesCast,
+          }
+        : undefined,
     },
     Math.random,
   );
@@ -451,13 +463,14 @@ export const useGameStore = create<GameStoreState>()(
           const state = get();
           const eligible = getEligibleCards(EVENT_CARDS, state.turn, state.opponentCommander?.id);
 
-          const forced = forceCardId ? EVENT_CARDS.find((c) => c.id === forceCardId) : undefined;
+          const forced = forceCardId ? findCardDefinition(forceCardId, EVENT_CARDS) : undefined;
           const cardDef =
             forced ?? pickWeightedCard(eligible, state.opponentCommander?.cardWeights ?? {}, Math.random);
 
           const computed = cardDef.computeStats(state.turn, state.bracket);
           const instanceId = `inst-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
           const eventsTriggered = state.eventsTriggered + 1;
+          const isCommander = cardDef.id === getCommanderCard(state.opponentCommander?.id)?.id;
 
           if (cardDef.isPermanent) {
             const perm: ActivePermanent = {
@@ -475,11 +488,14 @@ export const useGameStore = create<GameStoreState>()(
               counterType: cardDef.counterType,
               turnPlayed: state.turn,
               enteredOnOpponentTurn: state.turnPhase === 'opponent',
+              isCommander,
             };
             set({
               activePermanents: [perm, ...state.activePermanents],
               currentDrawnCard: perm,
               eventsTriggered,
+              // Casting from the command zone raises commander tax, even if it's then countered
+              commanderTimesCast: state.commanderTimesCast + (isCommander ? 1 : 0),
             });
             return;
           }

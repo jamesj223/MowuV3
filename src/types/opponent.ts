@@ -22,6 +22,7 @@ export interface AttackingCreature {
   power: number;
   toughness: number;
   count: number;     // number of bodies (swarms attack with several)
+  isCommander: boolean; // deals commander damage
   keywords: string;  // extracted from renderedText
 }
 

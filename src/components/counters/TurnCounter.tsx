@@ -2,7 +2,8 @@ import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import { ACTS_EVERY_TURN } from '@/data/tuning';
-import { getManaBudget } from '@/logic/opponent';
+import { COMMANDER_TAX, getCommanderCost, getManaBudget } from '@/logic/opponent';
+import { getCommanderCard } from '@/data/commanderCards';
 import { Play, Sparkles, Clock, Undo2, User, Swords } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -17,6 +18,8 @@ export const TurnCounter: React.FC = () => {
     customEventFrequency,
     isGameOver,
     opponentCommander,
+    commanderTimesCast,
+    commanderInPlay,
   } = useGameStore(
     useShallow((s) => ({
       turn: s.turn,
@@ -28,6 +31,8 @@ export const TurnCounter: React.FC = () => {
       customEventFrequency: s.customEventFrequency,
       isGameOver: s.isGameOver,
       opponentCommander: s.opponentCommander,
+      commanderTimesCast: s.commanderTimesCast,
+      commanderInPlay: s.activePermanents.some((p) => p.isCommander),
     })),
   );
 
@@ -35,6 +40,7 @@ export const TurnCounter: React.FC = () => {
   const freq = bracket === 'custom' ? customEventFrequency : bracketConfig.eventFrequency;
   const turnsUntilEvent = freq > 0 ? freq - (turn % freq) : null;
   const actsEveryTurn = ACTS_EVERY_TURN[bracket];
+  const commanderCard = getCommanderCard(opponentCommander?.id);
   const isOpponentPhase = turnPhase === 'opponent';
 
   return (
@@ -74,6 +80,18 @@ export const TurnCounter: React.FC = () => {
             <p className="text-[9px] text-neutral-500 font-mono truncate">
               {opponentCommander.archetype}
             </p>
+            {commanderCard && (
+              <p className="text-[9px] font-mono truncate mt-0.5" title="Commander tax: {2} more for each previous cast">
+                {commanderInPlay ? (
+                  <span className="text-amber-400">On the battlefield</span>
+                ) : (
+                  <span className="text-neutral-400">
+                    Command zone • costs {getCommanderCost(commanderCard, commanderTimesCast)}
+                    {commanderTimesCast > 0 && ` (tax +${commanderTimesCast * COMMANDER_TAX})`}
+                  </span>
+                )}
+              </p>
+            )}
           </div>
         </div>
       )}

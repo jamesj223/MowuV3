@@ -3,7 +3,7 @@ import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
 import { getEffectiveStats } from '@/logic/game';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
-import { ShieldAlert, Trash2, History, Sparkles } from 'lucide-react';
+import { ShieldAlert, Trash2, History, Sparkles, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
 interface BattlefieldZoneProps {
@@ -96,11 +96,19 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
             </button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3.5 items-start justify-start pt-1">
+          <div className="flex flex-wrap gap-3.5 items-start justify-start pt-2 pl-2">
             {activePermanents.map((perm) => {
               const stats = getEffectiveStats(perm);
               return (
-              <div key={perm.instanceId} className="shrink-0">
+              <div key={perm.instanceId} className="shrink-0 relative">
+                {perm.isCommander && (
+                  <div
+                    className="absolute -top-2 -left-2 z-30 rounded-full bg-amber-500 text-neutral-950 p-1 shadow-lg border-2 border-neutral-900"
+                    title="Mowu's commander: returns to the command zone if destroyed"
+                  >
+                    <Crown className="w-3.5 h-3.5" />
+                  </div>
+                )}
                 <PlaytestCard
                   name={perm.name}
                   typeLine={perm.typeLine}

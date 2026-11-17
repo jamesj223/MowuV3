@@ -102,6 +102,7 @@ export const getAttackers = (
         power,
         toughness: toughness ?? 0,
         count,
+        isCommander: Boolean(p.isCommander),
         keywords: extractKeywords(p.renderedText),
       },
     ];

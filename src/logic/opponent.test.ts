@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getManaBudget, getManaValue, planOpponentTurn, type PlanInput } from './opponent';
+import { COMMANDER_TAX, getCommanderCost, getManaBudget, getManaValue, planOpponentTurn, type PlanInput } from './opponent';
 import { EVENT_CARDS } from '@/data/cards';
 import { MOWU_COMMANDERS } from '@/data/commanders';
 import { EXTRA_PLAYS, MANA_BUDGET_CAP } from '@/data/tuning';
@@ -163,5 +163,50 @@ describe('planOpponentTurn', () => {
     );
     const aShare = picks.filter((id) => id === 'a').length / picks.length;
     expect(aShare).toBeLessThan(0.35);
+  });
+
+  describe('commander', () => {
+    const cmd = card('cmd', '{2}{G}', { typeLine: 'Legendary Creature', isPermanent: true });
+    const filler = card('filler', '{1}');
+
+    it('costs its mana value plus {2} per previous cast', () => {
+      expect(getCommanderCost(cmd, 0)).toBe(3);
+      expect(getCommanderCost(cmd, 2)).toBe(3 + 2 * COMMANDER_TAX);
+    });
+
+    it('is cast as the main play when it is in the command zone and affordable', () => {
+      for (let seed = 1; seed <= 30; seed++) {
+        const plan = planOpponentTurn(
+          input({ turn: 3, bracket: 'b2', cards: [filler], commander: { card: cmd, onBattlefield: false, timesCast: 0 } }),
+          seeded(seed),
+        );
+        expect(plan.plays.map((c) => c.id)).toEqual(['cmd']);
+      }
+    });
+
+    it('is not cast while on the battlefield', () => {
+      const plan = planOpponentTurn(
+        input({ turn: 5, bracket: 'b2', cards: [filler], commander: { card: cmd, onBattlefield: true, timesCast: 1 } }),
+        seeded(1),
+      );
+      expect(plan.plays.map((c) => c.id)).toEqual(['filler']);
+    });
+
+    it('waits until Mowu can pay the commander tax (and never uses it as the every-turn fallback)', () => {
+      const withTax = { card: cmd, onBattlefield: false, timesCast: 1 }; // costs 5
+      expect(planOpponentTurn(input({ turn: 4, bracket: 'b2', cards: [filler], commander: withTax }), seeded(1)).plays.map((c) => c.id)).toEqual(['filler']);
+      expect(planOpponentTurn(input({ turn: 5, bracket: 'b2', cards: [filler], commander: withTax }), seeded(1)).plays.map((c) => c.id)).toEqual(['cmd']);
+      const pricey = card('pricey', '{9}');
+      const plan = planOpponentTurn(input({ turn: 1, bracket: 'b2', cards: [pricey], commander: withTax }), seeded(1));
+      expect(plan.plays.map((c) => c.id)).toEqual(['pricey']);
+    });
+
+    it('leaves the rest of the mana for cheaper extras at higher brackets', () => {
+      const plan = planOpponentTurn(
+        input({ turn: 4, bracket: 'b5', cards: [filler], commander: { card: cmd, onBattlefield: false, timesCast: 0 } }),
+        seeded(1),
+      );
+      expect(plan.plays.map((c) => c.id)).toEqual(['cmd', 'filler']);
+    });
   });
 });

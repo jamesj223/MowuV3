@@ -105,22 +105,21 @@ const palettes = {
   colorless: [230, 230, 230],
 };
 
-const cardFiles = [
-  { name: 'homing-fireball-pigeon.png', palette: palettes.red },
-  { name: 'chump-blocker.png', palette: palettes.green },
-  { name: 'wall-of-beef.png', palette: palettes.green },
-  { name: 'wrath-of-oops.png', palette: palettes.white },
-  { name: 'bureaucratic-delay.png', palette: palettes.white },
-  { name: 'laser-pointer.png', palette: palettes.black },
-  { name: 'meat-pie.png', palette: palettes.white },
-  { name: 'clumsy-thief.png', palette: palettes.blue },
-  { name: 'tax-collector-mowu.png', palette: palettes.green },
-  { name: 'toxic-mosquito.png', palette: palettes.black },
-  { name: 'commander-banishment.png', palette: palettes.blue },
-  { name: 'graveyard-vacuum.png', palette: palettes.colorless },
-  { name: 'apex-behemoth.png', palette: palettes.green },
-  { name: 'ghostly-barrier.png', palette: palettes.white },
-];
+// Read every card's art file (and mana cost, for a colour hint) from the card data,
+// so new cards get a blank canvas automatically.
+const dataDir = path.resolve('src', 'data');
+const colourPalette = { W: palettes.white, U: palettes.blue, B: palettes.black, R: palettes.red, G: palettes.green };
+const cardFiles = [];
+const seen = new Set();
+for (const file of fs.readdirSync(dataDir).filter((f) => f.endsWith('.ts'))) {
+  const source = fs.readFileSync(path.join(dataDir, file), 'utf8');
+  for (const [, manaCost, artFile] of source.matchAll(/manaCost:\s*'([^']*)'[\s\S]*?artFile:\s*'([^']+)'/g)) {
+    if (seen.has(artFile)) continue;
+    seen.add(artFile);
+    const colour = (manaCost.match(/[WUBRG]/) ?? [])[0];
+    cardFiles.push({ name: artFile, palette: colourPalette[colour] ?? palettes.colorless });
+  }
+}
 
 for (const card of cardFiles) {
   const filePath = path.join(cardsDir, card.name);

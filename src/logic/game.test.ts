@@ -16,6 +16,8 @@ import {
   totalAttackPower,
 } from './game';
 import { EVENT_CARDS } from '@/data/cards';
+import { COMMANDER_CARDS, getCommanderCard } from '@/data/commanderCards';
+import { MOWU_COMMANDERS } from '@/data/commanders';
 import type { ActivePermanent } from '@/types/card';
 import { COMMANDER_BRACKETS, type CommanderBracket } from '@/types/game';
 
@@ -163,13 +165,17 @@ describe('official bracket data', () => {
 });
 
 describe('getEligibleCards', () => {
-  const tax = EVENT_CARDS.find((c) => c.id === 'tax-collector-mowu')!;
+  const tax = { ...EVENT_CARDS[0], id: 'tax-signature', minTurn: 3, signatureCommanderId: 'tax-collector' };
+  const pool = [...EVENT_CARDS, tax];
 
   it('only lets a signature card appear for its own commander', () => {
-    expect(tax.signatureCommanderId).toBe('tax-collector');
-    expect(getEligibleCards(EVENT_CARDS, 10, 'mecha')).not.toContain(tax);
-    expect(getEligibleCards(EVENT_CARDS, 10, undefined)).not.toContain(tax);
-    expect(getEligibleCards(EVENT_CARDS, 10, 'tax-collector')).toContain(tax);
+    expect(getEligibleCards(pool, 10, 'mecha')).not.toContain(tax);
+    expect(getEligibleCards(pool, 10, undefined)).not.toContain(tax);
+    expect(getEligibleCards(pool, 10, 'tax-collector')).toContain(tax);
+  });
+
+  it('keeps commander cards out of the random pool', () => {
+    for (const c of COMMANDER_CARDS) expect(EVENT_CARDS.map((e) => e.id)).not.toContain(c.id);
   });
 
   it('respects minimum turns', () => {
@@ -262,6 +268,40 @@ describe('buildMatchRecord', () => {
 
   it('records losses without a win reason', () => {
     expect(buildMatchRecord(game, false)).toMatchObject({ won: false, winReason: undefined });
+  });
+});
+
+describe('commander cards', () => {
+  it('every Mowu commander has exactly one commander card', () => {
+    for (const commander of MOWU_COMMANDERS) {
+      const cards = COMMANDER_CARDS.filter((c) => c.signatureCommanderId === commander.id);
+      expect(cards, commander.id).toHaveLength(1);
+      expect(getCommanderCard(commander.id)).toBe(cards[0]);
+    }
+  });
+
+  it('are legendary creature permanents with stats and flavour', () => {
+    for (const card of COMMANDER_CARDS) {
+      expect(card.typeLine, card.id).toMatch(/^Legendary (Artifact )?Creature/);
+      expect(card.isPermanent).toBe(true);
+      const stats = card.computeStats(5, 'b3');
+      expect(stats.power, card.id).toBeGreaterThanOrEqual(0);
+      expect(stats.toughness, card.id).toBeGreaterThan(0);
+      expect(card.flavorText, card.id).toBeTruthy();
+    }
+  });
+
+  it('B1 gimmick commanders are vanilla (no rules text)', () => {
+    for (const id of ['left-facing', 'chair-sitting']) {
+      expect(getCommanderCard(id)!.computeStats(5, 'b1').renderedText).toBe('');
+    }
+  });
+
+  it('have no activated abilities (ADR-019)', () => {
+    for (const card of COMMANDER_CARDS) {
+      // Activated abilities are written "cost: effect", e.g. "{T}: ..." or "{2}{U}: ..."
+      expect(card.computeStats(5, 'b3').renderedText, card.id).not.toMatch(/\}:/);
+    }
   });
 });
 

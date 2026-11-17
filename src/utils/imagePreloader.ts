@@ -1,4 +1,5 @@
 import { EVENT_CARDS } from '@/data/cards';
+import { COMMANDER_CARDS } from '@/data/commanderCards';
 
 /**
  * Preload card artwork into browser cache on startup.
@@ -9,7 +10,7 @@ export function preloadCardArt(): void {
 
   const preloaded = new Set<string>();
 
-  for (const card of EVENT_CARDS) {
+  for (const card of [...EVENT_CARDS, ...COMMANDER_CARDS]) {
     if (card.artFile && !preloaded.has(card.artFile)) {
       preloaded.add(card.artFile);
       const img = new Image();

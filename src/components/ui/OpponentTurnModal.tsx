@@ -215,6 +215,14 @@ export const OpponentTurnModal: React.FC = () => {
                             {attacker.count > 1 && (
                               <span className="ml-1 font-mono text-rose-300">×{attacker.count}</span>
                             )}
+                            {attacker.isCommander && (
+                              <span
+                                className="ml-1.5 text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                title="Unblocked damage from this creature is also commander damage"
+                              >
+                                Commander
+                              </span>
+                            )}
                           </p>
                           {attacker.keywords && (
                             <p className="text-[10px] text-neutral-400 font-mono">

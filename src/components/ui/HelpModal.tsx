@@ -102,7 +102,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
             <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
               <strong className="text-amber-400 block mb-1">🐕 Opponent Turn System & Commanders</strong>
-              Each turn alternates between your turn and an Opponent turn. Mowu has a mana budget that grows each turn (faster at higher brackets) and, outside Bracket 1, casts at least one card every turn. Press C (or Countered) if you counter a spell he casts. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
+              Each turn alternates between your turn and an Opponent turn. Mowu has a mana budget that grows each turn (faster at higher brackets) and, outside Bracket 1, casts at least one card every turn. Press C (or Countered) if you counter a spell he casts. Each Mowu has a commander card: he casts it from the command zone when he can afford it, and if it's destroyed it returns there and costs {2} more next time. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
             </div>
 
             <p className="text-xs text-neutral-400 mt-3">
