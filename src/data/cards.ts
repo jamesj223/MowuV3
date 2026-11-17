@@ -1,16 +1,5 @@
 import type { EventCardDefinition } from '@/types/card';
-import type { CommanderBracket } from '@/types/game';
-
-const getBracketMultiplier = (bracket: CommanderBracket): number => {
-  switch (bracket) {
-    case 'b1': return 0.75;
-    case 'b2': return 1.0;
-    case 'b3': return 1.25;
-    case 'b4': return 1.6;
-    case 'b5': return 2.0;
-    default: return 1.0;
-  }
-};
+import { bracketMultiplier } from '@/data/tuning';
 
 export const EVENT_CARDS: EventCardDefinition[] = [
   {
@@ -25,7 +14,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: 'It flies with burning precision straight toward your biggest threat.',
     templateText: 'Deals {X} damage to your creature with the highest power.',
     computeStats: (turn, bracket) => {
-      const mult = getBracketMultiplier(bracket);
+      const mult = bracketMultiplier(bracket);
       const x = Math.max(2, Math.round(turn * mult + 1));
       return {
         renderedText: `Deals ${x} damage to your creature with the highest power.`,
@@ -177,7 +166,7 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     flavorText: 'A towering fortress of prime cuts.',
     templateText: 'Defender, Reach.\nMust block if able.',
     computeStats: (turn, bracket) => {
-      const mult = getBracketMultiplier(bracket);
+      const mult = bracketMultiplier(bracket);
       const toughness = Math.max(4, Math.round(turn * mult + 2));
       return {
         renderedText: `Defender, Reach.\nMust block if able. (Toughness: ${toughness})`,

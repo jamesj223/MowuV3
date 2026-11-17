@@ -55,6 +55,13 @@ export const useHotkeys = (callbacks: HotkeyCallbacks) => {
         }
       };
 
+      // C during Mowu's main phase: the player countered the spell being cast
+      if (opp && opp.phase === 'event' && game.currentDrawnCard && e.code === 'KeyC' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        game.counterCurrentCard();
+        return;
+      }
+
       if (e.key === 'Escape') {
         if (opp) return advanceOpponentTurn();
         if (game.currentDrawnCard) return game.closeDrawnCard();

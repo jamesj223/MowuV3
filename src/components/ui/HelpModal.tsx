@@ -18,6 +18,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     { action: 'Heal / Rollback (+5 Life)', keys: ['Shift + Up', 'Shift + W'] },
     { action: 'Heal / Rollback (+10 Life)', keys: ['Alt + Up', 'Alt + W'] },
     { action: 'Trigger Random Event', keys: ['E'] },
+    { action: "Counter Mowu's Spell (his turn)", keys: ['C'] },
     { action: 'Restart Game (asks first)', keys: ['Shift + R'] },
     { action: 'Open Analytics & Benchmarks', keys: ['B'] },
     { action: 'Close Dialog / Open New Game', keys: ['Esc'] },
@@ -88,9 +89,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </h3>
             <p className="text-xs text-neutral-400 leading-relaxed">
               Brackets follow Wizards of the Coast's Commander Brackets (October 2025 update). Each
-              bracket sets how many turns you should expect to play before anyone wins or loses. Mowu
-              uses that as your benchmark: win sooner than that and your deck is probably playing
-              above the bracket. The opponent casts events more often at higher brackets.
+              bracket sets how many turns you should expect to play before anyone wins or loses. The
+              victory screen shows that next to the turn you won on.
             </p>
             <ul className="text-xs text-neutral-400 mt-2 space-y-1 list-disc list-inside">
               <li><strong className="text-emerald-400">Bracket 1: Exhibition</strong>: theme over power; at least 9 turns.</li>
@@ -102,7 +102,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
             <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
               <strong className="text-amber-400 block mb-1">🐕 Opponent Turn System & Commanders</strong>
-              Each turn alternates between your turn and an Opponent turn. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
+              Each turn alternates between your turn and an Opponent turn. Mowu has a mana budget that grows each turn (faster at higher brackets) and, outside Bracket 1, casts at least one card every turn. Press C (or Countered) if you counter a spell he casts. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
             </div>
 
             <p className="text-xs text-neutral-400 mt-3">

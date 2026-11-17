@@ -13,6 +13,7 @@ export const OpponentTurnModal: React.FC = () => {
     turn,
     advanceOpponentPhase,
     endOpponentTurn,
+    counterCurrentCard,
     currentDrawnCard,
   } = useGameStore(
     useShallow((s) => ({
@@ -21,6 +22,7 @@ export const OpponentTurnModal: React.FC = () => {
       turn: s.turn,
       advanceOpponentPhase: s.advanceOpponentPhase,
       endOpponentTurn: s.endOpponentTurn,
+      counterCurrentCard: s.counterCurrentCard,
       currentDrawnCard: s.currentDrawnCard,
     })),
   );
@@ -41,7 +43,10 @@ export const OpponentTurnModal: React.FC = () => {
 
   if (!opponentTurnState) return null;
 
-  const { phase, attackers, idleText } = opponentTurnState;
+  const { phase, attackers, idleText, casts, plannedCardIds, manaBudget } = opponentTurnState;
+  const castNumber = casts.length;
+  const castsPlanned = plannedCardIds.length;
+  const moreCardsComing = phase === 'event' && castNumber < castsPlanned;
   const commander = opponentCommander;
   const accentColor = commander?.accentColor ?? 'amber';
 
@@ -68,7 +73,7 @@ export const OpponentTurnModal: React.FC = () => {
 
   const getPhaseLabel = () => {
     switch (phase) {
-      case 'event': return 'Main Phase — Casting Spell';
+      case 'event': return castsPlanned > 1 ? `Main Phase — Spell ${castNumber} of ${castsPlanned}` : 'Main Phase — Casting Spell';
       case 'combat': return 'Combat Phase — Declaring Attackers';
       case 'idle': return 'Passing the Turn';
       case 'complete': return 'Turn Complete';
@@ -77,7 +82,7 @@ export const OpponentTurnModal: React.FC = () => {
 
   const getButtonText = () => {
     if (phase === 'event') {
-      return attackers.length > 0 ? 'Continue to Combat (Space / Enter)' : 'Continue (Space / Enter)';
+      return moreCardsComing ? 'Next Card (Space / Enter)' : 'Continue (Space / Enter)';
     }
     if (phase === 'combat') return 'End Opponent Turn (Space / Enter)';
     if (phase === 'idle') {
@@ -141,6 +146,9 @@ export const OpponentTurnModal: React.FC = () => {
                 <p className="text-xs font-semibold text-neutral-200">
                   {commander?.name ?? 'Opponent'} casts a spell!
                 </p>
+                <p className="text-[10px] text-neutral-500 mt-0.5 font-mono">
+                  {manaBudget} mana this turn
+                </p>
               </div>
 
               {currentDrawnCard && (
@@ -159,6 +167,21 @@ export const OpponentTurnModal: React.FC = () => {
                   />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Turn log: everything Mowu cast this turn */}
+          {casts.length > 0 && phase !== 'event' && (
+            <div className="rounded-xl bg-neutral-950/60 border border-neutral-800 p-2.5">
+              <p className="text-[10px] uppercase font-mono text-neutral-500 mb-1">Cast this turn</p>
+              <ul className="space-y-0.5 text-xs">
+                {casts.map((c) => (
+                  <li key={c.instanceId} className={c.countered ? 'text-neutral-500 line-through' : 'text-neutral-300'}>
+                    {c.name}
+                    {c.countered && <span className="ml-1 no-underline text-[10px] text-sky-400">(countered)</span>}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -246,6 +269,15 @@ export const OpponentTurnModal: React.FC = () => {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
+          {phase === 'event' && currentDrawnCard && (
+            <button
+              onClick={counterCurrentCard}
+              className="btn-press w-full mb-2 py-2 rounded-xl bg-sky-950/40 hover:bg-sky-900/50 text-sky-300 font-semibold text-xs border border-sky-800/60 cursor-pointer transition-all"
+              title="You countered this spell: it doesn't resolve"
+            >
+              Countered (C)
+            </button>
+          )}
           <button
             onClick={handleContinue}
             className={`btn-press relative overflow-hidden w-full py-3 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-white font-bold text-sm shadow-md border border-neutral-700 flex items-center justify-center gap-2 cursor-pointer transition-all`}

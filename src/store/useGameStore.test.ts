@@ -82,6 +82,83 @@ describe('useGameStore', () => {
   });
 });
 
+describe('opponent turns (Phase 3 engine)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  /** Play through a whole opponent turn by pressing "continue" until it's the player's turn again. */
+  const finishOpponentTurn = () => {
+    for (let i = 0; i < 10 && store().turnPhase === 'opponent'; i++) store().advanceOpponentPhase();
+  };
+
+  it('Mowu casts at least one card on every opponent turn in B2', () => {
+    store().startNewGame({ startingOpponentHealth: 999, bracket: 'b2' });
+    for (let t = 1; t <= 10; t++) {
+      store().nextTurn();
+      expect(store().opponentTurnState?.casts.length, `turn ${t}`).toBeGreaterThan(0);
+      finishOpponentTurn();
+      expect(store().turn).toBe(t + 1);
+    }
+  });
+
+  it('casts every planned card in order, then moves on (never "idle" after casting)', () => {
+    store().startNewGame({ startingOpponentHealth: 999, bracket: 'b5' });
+    let sawMultiple = false;
+    for (let t = 1; t <= 8; t++) {
+      store().nextTurn();
+      const planned = store().opponentTurnState!.plannedCardIds;
+      while (store().opponentTurnState?.phase === 'event') store().advanceOpponentPhase();
+      const turnState = store().opponentTurnState!;
+      expect(turnState.casts.map((c) => c.cardId)).toEqual(planned);
+      expect(['combat', 'complete']).toContain(turnState.phase);
+      if (planned.length > 1) sawMultiple = true;
+      finishOpponentTurn();
+    }
+    expect(sawMultiple).toBe(true);
+  });
+
+  it('countering a life-gain spell undoes the life gain and keeps damage stats', () => {
+    store().startNewGame({ startingOpponentHealth: 100, bracket: 'b2' });
+    store().applyDamageToOpponent(10);
+    useGameStore.setState({
+      turnPhase: 'opponent',
+      opponentTurnState: {
+        phase: 'event', hasEvent: true, attackers: [], idleText: null, eventTriggered: false,
+        manaBudget: 1, plannedCardIds: [], casts: [],
+      },
+    });
+    store().triggerEvent('suspicious-meat-pie');
+    expect(store().opponentHealth).toBe(96);
+    store().counterCurrentCard();
+    expect(store().opponentHealth).toBe(90);
+    expect(store().totalDamageDealt).toBe(10);
+    expect(store().eventHistory).toHaveLength(0);
+  });
+
+  it('a countered permanent never enters the battlefield and is marked in the turn log', () => {
+    store().startNewGame({ startingOpponentHealth: 999, bracket: 'b2' });
+    // Find a turn where Mowu casts a permanent, then counter it
+    for (let t = 1; t <= 20; t++) {
+      store().nextTurn();
+      const card = store().currentDrawnCard;
+      if (card && 'counters' in card) {
+        const id = card.instanceId;
+        store().counterCurrentCard();
+        expect(store().activePermanents.some((p) => p.instanceId === id)).toBe(false);
+        expect(store().opponentTurnState?.casts.find((c) => c.instanceId === id)?.countered).toBe(true);
+        return;
+      }
+      finishOpponentTurn();
+    }
+    throw new Error('Mowu never cast a permanent in 20 turns');
+  });
+});
+
 describe('parseMatch', () => {
   const valid = {
     id: 'm1',

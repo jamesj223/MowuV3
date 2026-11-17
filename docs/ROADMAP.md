@@ -6,7 +6,7 @@
 ---
 
 ## Current Handoff Status
-- **Next up (2026-11-17)**: Phase 3, "Mowu plays like an opponent". Draft plan in `docs/PHASE-3-PLAN.md`, awaiting owner answers to its open questions before Batch 1. Work happens on `feat/phase-3`.
+- **Phase 3 in progress (2026-11-17)** on `feat/phase-3`, plan in `docs/PHASE-3-PLAN.md`. Done: Batch 0 (neutral victory stats), Batch 1 (turn engine: mana budget, every-turn casts in B2–B5, multiple plays per turn, turn log, Countered button). Next: Batch 2 (command zone). Known: B5 casts a lot with the current small card pool (~2.75 cards/turn); revisit in the tuning pass once the pool grows.
 - **Current State (2026-11-16)**: Phase 2 (5 brackets, commander roster, chump blocker pack, idle auto-skip, art preloading) merged with a bug-fix pass. See `DECISIONS.md` ADR-013 to ADR-016 for what changed and why.
 - **Verification**: `npm run lint`, `npm test` and `npm run build` all pass (also run in CI); main flows checked in a browser.
 - **Docs**: the app README (`README.md`) covers hotkeys, project layout and how to add a card.

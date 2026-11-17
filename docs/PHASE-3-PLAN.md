@@ -1,6 +1,6 @@
 # Mowu v3 — Phase 3 Plan: Mowu Plays Like an Opponent
 
-> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batch 0 done; Batch 1 next.
+> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–1 done; Batch 2 next.
 
 ## Goals
 
@@ -168,7 +168,7 @@ Wizards' guidance.
 Each batch ends with lint, tests, build and a browser check, then updates ROADMAP/ADRs.
 
 - [x] **Batch 0: Quick win.** Neutral bracket stats on the victory screen.
-- [ ] **Batch 1: Engine foundation.** Mana value parser, `tuning.ts`, budget, `planOpponentTurn` with the
+- [x] **Batch 1: Engine foundation.** Mana value parser, `tuning.ts`, budget, `planOpponentTurn` with the
   B2–B5 guarantee (cast the cheapest card), multiple plays per turn, turn-log UI, "Countered" button. *Deliverable: Mowu never idles in B2+.*
 - [ ] **Batch 2: Command zone.** Commander state, tax, recast on destroy, left-panel display. Generalise Tax
   Collector Mowu; add commander cards for the other archetype Mowus.

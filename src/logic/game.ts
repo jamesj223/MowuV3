@@ -128,25 +128,25 @@ export const getEligibleCards = (
   return allowedForCommander.length > 0 ? allowedForCommander : cards;
 };
 
-/**
- * Weighted random pick. `random` must return a number in [0, 1).
- * Falls back to a uniform pick if every weight is zero.
- */
+/** Generic weighted pick. `random` returns [0, 1). Uniform if all weights are zero. */
+export const pickWeighted = <T>(items: T[], weightOf: (item: T) => number, random: () => number): T => {
+  const ws = items.map((i) => Math.max(0, weightOf(i)));
+  const total = ws.reduce((sum, w) => sum + w, 0);
+  if (total <= 0) return items[Math.floor(random() * items.length)];
+  let roll = random() * total;
+  for (let i = 0; i < ws.length; i++) {
+    roll -= ws[i];
+    if (roll < 0) return items[i];
+  }
+  return items[items.length - 1];
+};
+
+/** Weighted random card pick by category weight (used for manual "trigger event"). */
 export const pickWeightedCard = (
   eligible: EventCardDefinition[],
   weights: Partial<Record<EventCategory, number>>,
   random: () => number,
-): EventCardDefinition => {
-  const ws = eligible.map((c) => Math.max(0, weights[c.category] ?? 1));
-  const total = ws.reduce((sum, w) => sum + w, 0);
-  if (total <= 0) return eligible[Math.floor(random() * eligible.length)];
-  let roll = random() * total;
-  for (let i = 0; i < ws.length; i++) {
-    roll -= ws[i];
-    if (roll < 0) return eligible[i];
-  }
-  return eligible[eligible.length - 1];
-};
+): EventCardDefinition => pickWeighted(eligible, (c) => weights[c.category] ?? 1, random);
 
 export const createSnapshot = (
   turn: number,
@@ -163,8 +163,8 @@ export type HealthChangeSource = 'player' | 'card';
  * - Damage (negative delta) counts toward damage dealt immediately.
  * - A player heal (the +/W/Up "rollback") undoes damage dealt this turn, but
  *   never more than was dealt this turn.
- * - A card heal (opponent life gain) changes life only; it never erases the
- *   player's damage stats.
+ * - Card effects (opponent life gain, or undoing it when the card is countered)
+ *   change life only; they never touch the player's damage stats.
  */
 export const applyHealthChange = (
   game: {
@@ -193,7 +193,7 @@ export const applyHealthChange = (
   const current = snapshots[idx];
 
   let damageChange = 0;
-  if (appliedDelta < 0) {
+  if (appliedDelta < 0 && source === 'player') {
     damageChange = -appliedDelta;
   } else if (appliedDelta > 0 && source === 'player') {
     damageChange = -Math.min(appliedDelta, current.damageThisTurn);

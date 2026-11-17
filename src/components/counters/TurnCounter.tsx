@@ -1,6 +1,8 @@
 import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
+import { ACTS_EVERY_TURN } from '@/data/tuning';
+import { getManaBudget } from '@/logic/opponent';
 import { Play, Sparkles, Clock, Undo2, User, Swords } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -32,6 +34,7 @@ export const TurnCounter: React.FC = () => {
   const bracketConfig = COMMANDER_BRACKETS[bracket];
   const freq = bracket === 'custom' ? customEventFrequency : bracketConfig.eventFrequency;
   const turnsUntilEvent = freq > 0 ? freq - (turn % freq) : null;
+  const actsEveryTurn = ACTS_EVERY_TURN[bracket];
   const isOpponentPhase = turnPhase === 'opponent';
 
   return (
@@ -118,7 +121,14 @@ export const TurnCounter: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {freq > 0 && (
+            {actsEveryTurn ? (
+              <span
+                className="text-[10px] font-mono text-neutral-400 bg-neutral-900 px-2 py-1 rounded border border-neutral-800"
+                title="Mowu casts at least one card every turn in this bracket, spending up to this much mana"
+              >
+                Mowu: {getManaBudget(turn, bracket)} mana
+              </span>
+            ) : freq > 0 && (
               <span className="text-[10px] font-mono text-neutral-400 bg-neutral-900 px-2 py-1 rounded border border-neutral-800">
                 {turnsUntilEvent === freq ? (
                   <span className="text-amber-400 font-bold">Event now!</span>

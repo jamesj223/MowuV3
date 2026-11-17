@@ -214,6 +214,13 @@ describe('applyHealthChange', () => {
     expect(r.turnSnapshots[1].damageThisTurn).toBe(5);
   });
 
+  it('undoing a card heal (countered life gain) is not counted as player damage', () => {
+    const r = applyHealthChange(base(), -6, 'card');
+    expect(r.opponentHealth).toBe(94);
+    expect(r.totalDamageDealt).toBe(20);
+    expect(r.turnSnapshots[1].damageThisTurn).toBe(0);
+  });
+
   it('clamps at zero and counts only the damage actually dealt', () => {
     const r = applyHealthChange({ ...base(), opponentHealth: 3 }, -10, 'player');
     expect(r.opponentHealth).toBe(0);

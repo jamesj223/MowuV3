@@ -25,10 +25,21 @@ export interface AttackingCreature {
   keywords: string;  // extracted from renderedText
 }
 
+/** One card Mowu cast this turn, for the turn log. */
+export interface OpponentCast {
+  instanceId: string;
+  cardId: string;
+  name: string;
+  countered: boolean;
+}
+
 export interface OpponentTurnState {
   phase: OpponentTurnPhase;
   hasEvent: boolean;
   attackers: AttackingCreature[];
   idleText: string | null;
   eventTriggered: boolean;          // whether the event card has already been triggered
+  manaBudget: number;               // Mowu's mana this turn
+  plannedCardIds: string[];         // cards Mowu will cast this turn, in order
+  casts: OpponentCast[];            // cards cast so far this turn (turn log)
 }

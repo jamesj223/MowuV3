@@ -14,13 +14,12 @@ import {
   createSnapshot,
   getAttackers,
   getEligibleCards,
-  getEventFrequency,
-  isEventTurn,
   pickWeightedCard,
   rewindSnapshots,
   type HealthChangeSource,
   type Triple,
 } from '@/logic/game';
+import { planOpponentTurn } from '@/logic/opponent';
 
 /** How long the floating +/- delta badge stays visible after the last change. */
 const DELTA_DISPLAY_MS = 1600;
@@ -82,6 +81,7 @@ interface GameStoreState {
   prevTurn: () => void;
   endOpponentTurn: () => void;
   advanceOpponentPhase: () => void;
+  counterCurrentCard: () => void;
   adjustPlayerLife: (amount: number) => void;
   adjustPoison: (amount: number) => void;
   adjustCommanderDamage: (amount: number) => void;
@@ -171,9 +171,26 @@ const clearDeltaTimer = () => {
 
 const celebrate = () => confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
 
-/** Compute what the opponent does at the start of their turn. */
+/** Plan what the opponent does at the start of their turn. */
 const computeOpponentTurn = (state: GameStoreState): OpponentTurnState => {
-  const hasEvent = isEventTurn(state.turn, getEventFrequency(state.bracket, state.customEventFrequency));
+  const recentCasts = [
+    ...state.eventHistory.map((e) => ({ cardId: e.cardId, turn: e.turnResolved })),
+    ...state.activePermanents.map((p) => ({ cardId: p.cardId, turn: p.turnPlayed })),
+  ];
+  const plan = planOpponentTurn(
+    {
+      turn: state.turn,
+      bracket: state.bracket,
+      customFrequency: state.customEventFrequency,
+      commanderId: state.opponentCommander?.id,
+      cardWeights: state.opponentCommander?.cardWeights ?? {},
+      battlefieldCardIds: state.activePermanents.map((p) => p.cardId),
+      recentCasts,
+      cards: EVENT_CARDS,
+    },
+    Math.random,
+  );
+  const hasEvent = plan.plays.length > 0;
   const attackers = getAttackers(state.activePermanents, state.turn);
 
   let phase: OpponentTurnState['phase'] = 'idle';
@@ -186,6 +203,9 @@ const computeOpponentTurn = (state: GameStoreState): OpponentTurnState => {
     attackers,
     idleText: !hasEvent && attackers.length === 0 ? pickIdleText(state.opponentCommander) : null,
     eventTriggered: false,
+    manaBudget: plan.budget,
+    plannedCardIds: plan.plays.map((c) => c.id),
+    casts: [],
   };
 };
 
@@ -221,6 +241,31 @@ export const useGameStore = create<GameStoreState>()(
             createSnapshot(nextTurnNum, state.opponentHealth, state.totalDamageDealt),
           ],
         });
+      };
+
+      /** Cast the next card in this opponent turn's plan. Returns false if none are left. */
+      const castNextPlannedCard = (): boolean => {
+        const turnState = get().opponentTurnState;
+        if (!turnState) return false;
+        const cardId = turnState.plannedCardIds[turnState.casts.length];
+        if (!cardId) return false;
+        get().triggerEvent(cardId);
+        const cast = get().currentDrawnCard;
+        set((current) => ({
+          opponentTurnState: current.opponentTurnState
+            ? {
+                ...current.opponentTurnState,
+                eventTriggered: true,
+                casts: cast
+                  ? [
+                      ...current.opponentTurnState.casts,
+                      { instanceId: cast.instanceId, cardId, name: cast.name, countered: false },
+                    ]
+                  : current.opponentTurnState.casts,
+              }
+            : null,
+        }));
+        return true;
       };
 
       return {
@@ -282,14 +327,7 @@ export const useGameStore = create<GameStoreState>()(
 
           set({ turnPhase: 'opponent', opponentTurnState: oppTurn });
 
-          if (oppTurn.hasEvent) {
-            get().triggerEvent();
-            set((current) => ({
-              opponentTurnState: current.opponentTurnState
-                ? { ...current.opponentTurnState, eventTriggered: true }
-                : null,
-            }));
-          }
+          if (oppTurn.hasEvent) castNextPlannedCard();
         },
 
         endOpponentTurn: () => {
@@ -302,18 +340,21 @@ export const useGameStore = create<GameStoreState>()(
           const { phase } = state.opponentTurnState;
 
           if (phase === 'event') {
-            // Re-evaluate attackers now the event has resolved (a hasty creature may have arrived)
-            const attackers = getAttackers(state.activePermanents, state.turn);
+            // More cards planned this turn? Cast the next one.
+            if (castNextPlannedCard()) return;
+
+            // Re-evaluate attackers now the casts have resolved (a hasty creature may have arrived).
+            // Mowu did cast something, so with no attackers the turn is 'complete', not 'idle'.
+            const after = get();
+            const attackers = getAttackers(after.activePermanents, after.turn);
             set({
-              opponentTurnState:
-                attackers.length > 0
-                  ? { ...state.opponentTurnState, phase: 'combat', attackers }
-                  : {
-                      ...state.opponentTurnState,
-                      phase: 'idle',
-                      attackers,
-                      idleText: pickIdleText(state.opponentCommander),
-                    },
+              opponentTurnState: after.opponentTurnState
+                ? {
+                    ...after.opponentTurnState,
+                    phase: attackers.length > 0 ? 'combat' : 'complete',
+                    attackers,
+                  }
+                : null,
               currentDrawnCard: null,
             });
             return;
@@ -326,6 +367,33 @@ export const useGameStore = create<GameStoreState>()(
 
           // idle or complete → end the opponent turn
           get().endOpponentTurn();
+        },
+
+        counterCurrentCard: () => {
+          const state = get();
+          const turnState = state.opponentTurnState;
+          const card = state.currentDrawnCard;
+          if (!turnState || turnState.phase !== 'event' || !card) return;
+
+          if ('counters' in card) {
+            // A countered permanent spell never enters the battlefield
+            set({ activePermanents: state.activePermanents.filter((p) => p.instanceId !== card.instanceId) });
+          } else {
+            set({ eventHistory: state.eventHistory.filter((e) => e.instanceId !== card.instanceId) });
+            if (card.healAmount) get().applyOpponentHealthChange(-card.healAmount, 'card');
+          }
+
+          set((current) => ({
+            opponentTurnState: current.opponentTurnState
+              ? {
+                  ...current.opponentTurnState,
+                  casts: current.opponentTurnState.casts.map((c) =>
+                    c.instanceId === card.instanceId ? { ...c, countered: true } : c,
+                  ),
+                }
+              : null,
+          }));
+          get().advanceOpponentPhase();
         },
 
         prevTurn: () => {
@@ -424,6 +492,7 @@ export const useGameStore = create<GameStoreState>()(
             artFile: cardDef.artFile,
             renderedText: computed.renderedText,
             turnResolved: state.turn,
+            healAmount: computed.healAmount,
           };
 
           if (computed.healAmount && computed.healAmount > 0) {
@@ -491,7 +560,8 @@ export const useGameStore = create<GameStoreState>()(
     {
       name: 'mowu-v3-game-store',
       // v0 persisted settings only; v1 also persists the game in progress.
-      version: 1,
+      // v2: opponent turns carry a cast plan; drop any mid-turn state from older saves.
+      version: 2,
       partialize: (state) =>
         Object.fromEntries(PERSISTED_KEYS.map((k) => [k, state[k]])) as Partial<GameStoreState>,
       migrate: (persisted, version) => {
@@ -500,6 +570,18 @@ export const useGameStore = create<GameStoreState>()(
           // Old saves have no game in progress: start one that matches the saved settings.
           const settings = { ...DEFAULT_SETTINGS, ...saved };
           return { ...settings, ...createFreshGame(settings) } as unknown as GameStoreState;
+        }
+        if (version < 2) {
+          const game = persisted as Partial<GameStoreState>;
+          if (game.turnPhase === 'opponent') {
+            // Finish the interrupted opponent turn rather than resuming it in the old format
+            return {
+              ...game,
+              turnPhase: 'player',
+              opponentTurnState: null,
+              currentDrawnCard: null,
+            } as GameStoreState;
+          }
         }
         return persisted as GameStoreState;
       },

@@ -66,4 +66,5 @@ export interface ResolvedEvent {
   artFile: string;
   renderedText: string;
   turnResolved: number;
+  healAmount?: number;   // opponent life gained, so a counter can undo it
 }

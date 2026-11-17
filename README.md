@@ -11,9 +11,10 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
 
 - **Opponent life tracker.** Damage is recorded the moment you deal it. A floating badge shows the running
   delta for the current burst.
-- **Opponent turns.** After each of your turns, the opponent may cast an event card (currently on the bracket's cadence;
-  Phase 3 changes this so that outside Bracket 1 Mowu acts every turn)
-  and declares attackers with its non-Defender creatures. Creatures it casts during its own turn have summoning
+- **Opponent turns.** After each of your turns, Mowu takes a turn. He has a mana budget (the turn number,
+  plus ramp at higher brackets) and spends it on cards: one main play, plus cheaper extras at Brackets 3–5.
+  Outside Bracket 1 he casts something every turn. You can mark any card he casts as **Countered** (`C`), and it
+  doesn't resolve. Then his non-Defender creatures attack. Creatures he casts during his own turn have summoning
   sickness unless they have Haste.
 - **Mowu commanders.** Each one biases which kinds of card appear (taxes, creatures, removal…) and has its own
   idle flavour text.
@@ -32,6 +33,7 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
 | Deal damage (1 / 5 / 10) | `S`, `↓`, `-` · with `Shift` ×5 · with `Alt` ×10 |
 | Heal / roll back (1 / 5 / 10) | `W`, `↑`, `+` · with `Shift` ×5 · with `Alt` ×10 |
 | Trigger a random event | `E` |
+| Counter the spell Mowu is casting (his turn) | `C` |
 | Restart (asks first if a game is in progress) | `Shift + R` |
 | Analytics | `B` |
 | Close dialog / open New Game | `Esc` |
@@ -53,18 +55,18 @@ Each bracket says how many turns you should expect to play before anyone wins or
 shows that expectation next to the turn you actually won on, so you can see at a glance whether a deck is
 winning faster or slower than its bracket suggests.
 
-| Bracket | Expect to play at least | Opponent event every |
-| --- | --- | --- |
-| 1: Exhibition | 9 turns | 6 turns |
-| 2: Core | 8 turns | 4 turns |
-| 3: Upgraded | 6 turns | 3 turns |
-| 4: Optimized | 4 turns | 2 turns |
-| 5: cEDH | any turn | every turn |
-| Custom | | you choose |
-| Off (solitaire) | | never |
+| Bracket | Expect to play at least | Mowu casts | Mowu's mana (ramp) |
+| --- | --- | --- | --- |
+| 1: Exhibition | 9 turns | every 6 turns | turn number |
+| 2: Core | 8 turns | every turn, 1 card | turn number |
+| 3: Upgraded | 6 turns | every turn, up to 2 cards | +1 from turn 3 |
+| 4: Optimized | 4 turns | every turn, up to 3 cards | +1 from turn 2, +2 from turn 4 |
+| 5: cEDH | any turn | every turn, up to 3 cards | +2 |
+| Custom | | every N turns (you choose) | turn number |
+| Off (solitaire) | | never | |
 
-The official "players expect" descriptions appear in the New Game dialog. Event cadence and card scaling
-are Mowu's own tuning (see `src/types/game.ts` and `computeStats` in `src/data/cards.ts`).
+The official "players expect" descriptions appear in the New Game dialog. Mowu's mana, plays per turn and
+card scaling are our own tuning, all in `src/data/tuning.ts`.
 
 ## Development
 
@@ -84,6 +86,8 @@ CI (`.github/workflows/ci.yml`) runs lint, tests and build on every push to `mas
 ```
 src/
   logic/game.ts        pure game rules (victory, attackers, counters, damage bookkeeping), unit-tested
+  logic/opponent.ts    Mowu's turn planner (mana budget, what to cast), unit-tested
+  data/tuning.ts       difficulty dials: ramp, plays per turn, scaling multipliers
   store/               Zustand stores: live game + settings, decks + match history
   data/cards.ts        event card definitions and their bracket/turn scaling
   data/commanders.ts   Mowu commander variants, card weights and idle texts
