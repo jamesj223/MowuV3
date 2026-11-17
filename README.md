@@ -11,7 +11,8 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
 
 - **Opponent life tracker.** Damage is recorded the moment you deal it. A floating badge shows the running
   delta for the current burst.
-- **Opponent turns.** After each of your turns, the opponent may cast an event card (on the bracket's cadence)
+- **Opponent turns.** After each of your turns, the opponent may cast an event card (currently on the bracket's cadence;
+  Phase 3 changes this so that outside Bracket 1 Mowu acts every turn)
   and declares attackers with its non-Defender creatures. Creatures it casts during its own turn have summoning
   sickness unless they have Haste.
 - **Mowu commanders.** Each one biases which kinds of card appear (taxes, creatures, removal…) and has its own

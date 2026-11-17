@@ -12,7 +12,7 @@
 
 ### Open questions
 1. ~~Bracket target turns~~ Resolved: official Oct 2025 wording and turn expectations (ADR-017).
-2. **Card scaling.** The per-bracket multipliers and formulas in `src/data/cards.ts` are untuned guesses. Intended feel: between solitaire goldfishing and a Forge/Arena-style bot; on B2+ the bot should usually do *something* each turn. Needs a design pass plus playtesting: which events suit which turn/bracket/deck, and how strongly they scale. The bracket `minTurns` give a target: a typical deck for a bracket should win a bit after that turn.
+2. **Card scaling.** The per-bracket multipliers and formulas in `src/data/cards.ts` are untuned guesses. Intended feel: between solitaire goldfishing and a Forge/Arena-style bot; outside of Bracket 1 the bot does *something* every turn (ADR-018). Needs a design pass plus playtesting: which events suit which turn/bracket/deck, and how strongly they scale. The bracket `minTurns` give a target: a typical deck for a bracket should win a bit after that turn.
 3. ~~Help text~~ Resolved: no longer claims difficulty "matches" the brackets.
 
 ---

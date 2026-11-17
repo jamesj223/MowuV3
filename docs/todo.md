@@ -28,7 +28,17 @@
 ## Bugs/Tweaks/Feedback
 
 - Skull icon for creatures, X for enchantments? Kept intentionally as a nice touch!
-- It feels weird (in all brackets but especially the current "bracket 5 cedh") that the opponent does nothing on their turn so often. I don't want them to play big bombs every single turn, but it feels like they should play *something* most turns, especially brackets 3, 4 and 5. Even if we have to dial down the strength of some cards and add more. (Tracked for archetype plans)
+- **Rule: outside of Bracket 1, Mowu does *something* every turn.** No idle turns in Brackets 2–5.
+  "Something" doesn't mean a bomb: a cheap creature, a counter on an existing permanent, a small tax, or
+  recasting/buffing his commander all count. Big swings (wipes, combo pieces, finishers) stay occasional.
+  Bracket 1 (Exhibition) can still have quiet turns, but should lean into its theme when it acts.
+  Custom and Solitaire are unchanged. Even if we have to dial down the strength of some cards and add more.
+  (Phase 3; see ADR-018.)
+- **Victory screen: neutral bracket pace summary.** Replace the current "faster than this bracket expects /
+  may play above this bracket" message with a plain, matter-of-fact line: the selected bracket, its
+  expected game length, and the turn you actually won on, e.g. *"Bracket 3: Upgraded · expects at least
+  6 turns · you won on turn 5"*. No verdict, no warning colours, no telling the user off; let them draw
+  their own conclusion.
 - Commanders aren't really playing to their plans/archetypes yet.
     - Voltron Mowu should be playing his commander and buffing it each turn (or recasting it, if it's not already on the battlefield.)
     - Combo Mowu should start assembling pieces of his combo. (e.g. B4 "3 Card Combo Part A/B/C" and B5 "2 Card Combo". Maybe each part is a different type: Creature/Enchantment/Artifact).

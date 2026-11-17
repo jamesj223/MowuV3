@@ -12,8 +12,9 @@ specific permanent, or react to events. Opponent cards are therefore *fake* card
 more" instead of counterspells, and tokens with Deathtouch, Toxic or "must block". Card art is hand-drawn by
 the owner in MS Paint (`public/cards/*.png`) for a homemade playtest-card look.
 
-Design intent for the opponent: from Bracket 2 up it should do *something* most turns (not necessarily a bomb),
-and each Mowu commander should play to its archetype. See `docs/todo.md`.
+Design intent for the opponent: **outside of Bracket 1, Mowu does *something* every turn** (not necessarily a
+bomb: a cheap creature, a counter, a small tax all count), and each Mowu commander plays to its archetype.
+Bracket 1 may have quiet turns. See ADR-018 and `docs/todo.md`.
 
 ## Where things are
 

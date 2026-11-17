@@ -99,3 +99,8 @@
 - **Decision**: Bracket names, "players expect" bullets and turn expectations in `src/types/game.ts` are quoted verbatim from Wizards' *Commander Brackets Beta Update – October 21, 2025*. The turn expectation is stored as `minTurns` (9 / 8 / 6 / 4 / none for cEDH). Core (B2) is no longer described in terms of precons, matching that update. The victory screen compares the winning turn to `minTurns`: winning on or before it is "faster than this bracket expects".
 - **Rationale**: Earlier LLM-written descriptions invented turn ranges (e.g. "11–14+", "2–4") and tied brackets to precons. Supersedes ADR-007 and the turn targets in `PHASE-2-PLAN.md`.
 - **Precedence**: Where earlier LLM-made decisions conflict with ones recorded from ADR-013 onward, the later ones win (owner's call, 2026-11-16).
+
+## ADR-018: Outside Bracket 1, Mowu Acts Every Turn
+- **Date**: 2026-11-17
+- **Decision**: In Brackets 2–5 the opponent takes at least one main-phase action on every one of its turns; idle turns don't happen. An action can be small (cheap creature, counter on an existing permanent, minor tax, casting or buffing its commander); big effects (wipes, combo pieces, finishers) remain occasional and are gated by turn and bracket. Bracket 1 (Exhibition) may have quiet turns and leans into its theme. Custom keeps the user-set cadence; Solitaire has no opponent.
+- **Rationale**: Owner playtest feedback: an opponent that often does nothing doesn't feel like a real opponent, especially at higher brackets. Supersedes the "event every N turns" cadence for B2–B5 (ADR-007, `PHASE-2-PLAN.md`). The idle auto-skip (Phase 2) remains for B1, Custom and turns where the player wants to move quickly.
