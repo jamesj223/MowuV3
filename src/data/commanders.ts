@@ -236,17 +236,25 @@ export const GENERIC_IDLE_TEXTS = [
   'Opponent pretends to think deeply about nothing...',
 ];
 
+/** Mowu commanders that can appear at this bracket and haven't been switched off by the player. */
+export function getEligibleCommanders(bracket: CommanderBracket, disabled: string[] = []): MowuCommander[] {
+  if (bracket === 'off' || bracket === 'custom') return [];
+  return MOWU_COMMANDERS.filter((c) => c.brackets.includes(bracket) && !disabled.includes(c.id));
+}
+
 /**
- * Pick a random commander that matches the given bracket.
- * Returns null if bracket is 'off' or 'custom'.
+ * Pick a random commander for the bracket, skipping any the player disabled.
+ * Returns null for 'off'/'custom', or if every commander for the bracket is
+ * disabled: the player then faces a generic opponent (generic cards only).
  */
-export function pickRandomCommander(bracket: CommanderBracket): MowuCommander | null {
-  if (bracket === 'off' || bracket === 'custom') return null;
-
-  const eligible = MOWU_COMMANDERS.filter((c) => c.brackets.includes(bracket));
+export function pickRandomCommander(
+  bracket: CommanderBracket,
+  disabled: string[] = [],
+  random: () => number = Math.random,
+): MowuCommander | null {
+  const eligible = getEligibleCommanders(bracket, disabled);
   if (eligible.length === 0) return null;
-
-  return eligible[Math.floor(Math.random() * eligible.length)];
+  return eligible[Math.floor(random() * eligible.length)];
 }
 
 /**

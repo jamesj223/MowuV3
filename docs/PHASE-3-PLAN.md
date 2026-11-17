@@ -1,6 +1,6 @@
 # Mowu v3 — Phase 3 Plan: Mowu Plays Like an Opponent
 
-> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–4 done; Batch 5 (commander settings) next, then the tuning pass.
+> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–5 done; Batch 6 (tuning pass) after the owner has playtested.
 
 ## Goals
 
@@ -177,7 +177,7 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
   B1 gimmicks.
 - [x] **Batch 4: Card pool pass.** Remaining new cards, reminder-text rewording, placeholder script reads the
   card list, "most wanted art" list.
-- [ ] **Batch 5: Commander settings.** Enable/disable individual Mowus (backlog item); the New Game dialog
+- [x] **Batch 5: Commander settings.** Enable/disable individual Mowus (backlog item); the New Game dialog
   already lists possible commanders, so they become toggles.
 - [ ] **Batch 6: Tuning pass** after you've played some games on the new engine.
 

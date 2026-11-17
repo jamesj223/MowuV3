@@ -149,6 +149,7 @@ export interface GameSettings {
   trackPlayerCommanderDamage: boolean; // show player commander damage (default: false)
   trackOpponentPoison: boolean;   // show 3 opponent poison tracks (default: false)
   trackOpponentCommanderDamage: boolean; // show 3 opponent commander damage tracks (default: false)
+  disabledCommanders: string[];   // Mowu commander ids the player switched off
 }
 
 export interface TurnSnapshot {

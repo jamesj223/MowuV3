@@ -3,7 +3,7 @@ import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import type { CommanderBracket } from '@/types/game';
 import { COMMANDER_BRACKETS } from '@/types/game';
-import { MOWU_COMMANDERS } from '@/data/commanders';
+import { MOWU_COMMANDERS, getEligibleCommanders } from '@/data/commanders';
 import { X, Play, Settings } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -20,6 +20,7 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
     customEventFrequency,
     trackPlayer,
     currentDeckName,
+    disabledCommanders,
     startNewGame,
   } = useGameStore(
     useShallow((s) => ({
@@ -29,6 +30,7 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
       customEventFrequency: s.customEventFrequency,
       trackPlayer: s.trackPlayer,
       currentDeckName: s.currentDeckName,
+      disabledCommanders: s.disabledCommanders ?? [],
       startNewGame: s.startNewGame,
     })),
   );
@@ -43,6 +45,9 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
   const [selectedBracket, setSelectedBracket] = useState<CommanderBracket>(bracket);
   const [customFreq, setCustomFreq] = useState(customEventFrequency || 4);
   const [enablePlayerTrack, setEnablePlayerTrack] = useState(trackPlayer);
+  const [disabled, setDisabled] = useState<string[]>(disabledCommanders);
+  const toggleCommander = (id: string) =>
+    setDisabled((current) => (current.includes(id) ? current.filter((c) => c !== id) : [...current, id]));
 
   if (!isOpen) return null;
 
@@ -61,6 +66,7 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
       bracket: selectedBracket,
       customEventFrequency: customFreq,
       trackPlayer: enablePlayerTrack,
+      disabledCommanders: disabled,
     });
 
     onClose();
@@ -222,21 +228,37 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
             {selectedBracket !== 'off' && selectedBracket !== 'custom' && (
               <div className="mt-2.5 p-2.5 rounded-xl bg-neutral-950/70 border border-neutral-800 text-[11px]">
                 <span className="text-neutral-500 uppercase tracking-wider text-[10px] block font-bold mb-1">
-                  Possible Opponent Commanders:
+                  Possible Opponent Commanders <span className="normal-case font-normal">(click to switch one off)</span>:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {MOWU_COMMANDERS.filter((c) => c.brackets.includes(selectedBracket)).map((c) => (
-                    <span
-                      key={c.id}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium text-[11px]"
-                      title={`${c.title} • ${c.archetype}: ${c.flavour}`}
-                    >
-                      <span>{c.avatar}</span>
-                      <span>{c.name}</span>
-                      <span className="text-[10px] text-neutral-500 font-mono">({c.archetype})</span>
-                    </span>
-                  ))}
+                  {MOWU_COMMANDERS.filter((c) => c.brackets.includes(selectedBracket)).map((c) => {
+                    const off = disabled.includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => toggleCommander(c.id)}
+                        aria-pressed={!off}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-medium text-[11px] cursor-pointer transition-colors ${
+                          off
+                            ? 'bg-neutral-950 border-neutral-800 text-neutral-600 line-through'
+                            : 'bg-neutral-900 border-neutral-700 text-neutral-300 hover:border-neutral-500'
+                        }`}
+                        title={`${off ? 'Switched off: click to allow' : 'Click to switch off'} • ${c.title} • ${c.archetype}: ${c.flavour}`}
+                      >
+                        <span className={off ? 'grayscale opacity-50' : ''}>{c.avatar}</span>
+                        <span>{c.name}</span>
+                        <span className="text-[10px] text-neutral-500 font-mono">({c.archetype})</span>
+                      </button>
+                    );
+                  })}
                 </div>
+                {getEligibleCommanders(selectedBracket, disabled).length === 0 && (
+                  <p className="mt-1.5 text-[11px] text-amber-300">
+                    Every Mowu for this bracket is switched off, so you'll face a generic opponent (shared cards
+                    only, no commander).
+                  </p>
+                )}
               </div>
             )}
           </div>

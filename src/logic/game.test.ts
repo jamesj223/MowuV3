@@ -20,7 +20,7 @@ import {
 } from './game';
 import { EVENT_CARDS } from '@/data/cards';
 import { COMMANDER_CARDS, getCommanderCard } from '@/data/commanderCards';
-import { MOWU_COMMANDERS } from '@/data/commanders';
+import { MOWU_COMMANDERS, getEligibleCommanders, pickRandomCommander } from '@/data/commanders';
 import { COMBO_LOSS_TEXTS, pickStable } from '@/data/flavour';
 import { ARCHETYPE_CARDS, TOKEN_CARDS, TOKENS_BY_ID } from '@/data/archetypeCards';
 import { getManaValue } from './opponent';
@@ -352,6 +352,23 @@ describe('buildMatchRecord', () => {
 
   it('records losses without a win reason', () => {
     expect(buildMatchRecord(game, false)).toMatchObject({ won: false, winReason: undefined });
+  });
+});
+
+describe('switching Mowus off', () => {
+  it('never picks a disabled commander', () => {
+    for (let i = 0; i < 50; i++) {
+      const picked = pickRandomCommander('b3', ['alchemist', 'mecha'], () => i / 50);
+      expect(['alchemist', 'mecha']).not.toContain(picked?.id);
+    }
+  });
+
+  it('falls back to a generic opponent (null) when every Mowu for the bracket is off', () => {
+    const b1 = MOWU_COMMANDERS.filter((c) => c.brackets.includes('b1')).map((c) => c.id);
+    expect(getEligibleCommanders('b1', b1)).toEqual([]);
+    expect(pickRandomCommander('b1', b1)).toBeNull();
+    // Other brackets are unaffected
+    expect(pickRandomCommander('b2', b1)).not.toBeNull();
   });
 });
 

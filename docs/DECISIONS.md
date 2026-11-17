@@ -127,3 +127,8 @@
 - **Date**: 2026-11-17
 - **Decision**: Card effects are split. Effects the app can track (counters on Mowu's permanents, Mowu's tokens, the player's poison counters, Mowu's life) are applied automatically when a card resolves or a printed upkeep trigger fires, and are listed in the turn log. Effects only the player can carry out (discard, pay mana, untap restrictions, cost increases) stay as card text. Each cast records an undo so "Countered" reverses its automatic effects exactly. Static buffs (equipment, anthems) are computed from the permanents on the battlefield, never stored on the buffed creature, so removing the source removes the buff.
 - **Rationale**: Keeps the board state honest and low-effort for the player while respecting the core constraint that the app can't see the player's side (see `CLAUDE.md`), and keeps every effect traceable to a source (ADR-019).
+
+## ADR-023: Switching Mowus Off
+- **Date**: 2026-11-17
+- **Decision**: The player can switch individual Mowu commanders off by clicking them in the New Game dialog. The list (`disabledCommanders`) is a persisted setting, applied to new games and restarts. If every Mowu for the chosen bracket is off, the game uses a generic opponent (no commander, generic cards only) rather than refusing to start or ignoring the setting; the dialog warns when that will happen.
+- **Rationale**: Owner backlog item (e.g. skipping Infect). Falling back to a generic opponent respects the player's choice and keeps every bracket playable.

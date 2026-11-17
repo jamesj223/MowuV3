@@ -39,6 +39,8 @@ interface GameStoreState {
   trackPlayerCommanderDamage: boolean;
   trackOpponentPoison: boolean;
   trackOpponentCommanderDamage: boolean;
+  /** Mowu commanders the player has switched off (never picked as the opponent). */
+  disabledCommanders: string[];
   currentDeckName: string;
 
   // Live Opponent Health (Counting Down to 0)
@@ -119,6 +121,7 @@ type SettingsState = Pick<
   | 'trackPlayerCommanderDamage'
   | 'trackOpponentPoison'
   | 'trackOpponentCommanderDamage'
+  | 'disabledCommanders'
   | 'currentDeckName'
 >;
 
@@ -132,12 +135,14 @@ const DEFAULT_SETTINGS: SettingsState = {
   trackPlayerCommanderDamage: false,
   trackOpponentPoison: false,
   trackOpponentCommanderDamage: false,
+  disabledCommanders: [],
   currentDeckName: '',
 };
 
 /** Everything that makes up a single game in progress, freshly initialised. */
 const createFreshGame = (
-  settings: Pick<SettingsState, 'startingOpponentHealth' | 'startingPlayerLife' | 'bracket'>,
+  settings: Pick<SettingsState, 'startingOpponentHealth' | 'startingPlayerLife' | 'bracket'> &
+    Partial<Pick<SettingsState, 'disabledCommanders'>>,
 ) => {
   const now = Date.now();
   return {
@@ -160,7 +165,7 @@ const createFreshGame = (
     eventHistory: [],
     eventsTriggered: 0,
     currentDrawnCard: null,
-    opponentCommander: pickRandomCommander(settings.bracket),
+    opponentCommander: pickRandomCommander(settings.bracket, settings.disabledCommanders ?? []),
     opponentTurnState: null,
     commanderTimesCast: 0,
     turnSnapshots: [createSnapshot(1, settings.startingOpponentHealth, 0, now)],
@@ -645,6 +650,7 @@ export const useGameStore = create<GameStoreState>()(
             trackOpponentPoison: rest.trackOpponentPoison ?? state.trackOpponentPoison,
             trackOpponentCommanderDamage:
               rest.trackOpponentCommanderDamage ?? state.trackOpponentCommanderDamage,
+            disabledCommanders: rest.disabledCommanders ?? state.disabledCommanders,
             currentDeckName: deckName ?? state.currentDeckName,
           };
           set({ ...nextSettings, ...createFreshGame(nextSettings) });

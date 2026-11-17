@@ -67,7 +67,7 @@
 - [x] Add more cards! (Phase 3: 33 archetype cards, 5 generic, 2 tokens; more welcome)
 - [x] Rework some of the existing cards. (Phase 3 Batch 4: numbers in `CARD_TUNING`, clearer text)
 - [x] Reword or remove some of the reminder text. Particularly the must attack and must block. (Phase 3 Batch 4)
-- Setting to enable/disable specific commanders. So people don't have to play against Infect Mowu if they don't want.
+- [x] Setting to enable/disable specific commanders. So people don't have to play against Infect Mowu if they don't want. (Phase 3 Batch 5)
 - Separate settings page from new game page?
 
 ## Long term

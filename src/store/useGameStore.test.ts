@@ -333,6 +333,21 @@ describe('archetype playbooks in play', () => {
   });
 });
 
+describe('disabled commanders', () => {
+  it('new games and restarts never use a switched-off Mowu, and the setting persists', () => {
+    store().startNewGame({ bracket: 'b4', disabledCommanders: ['archmage', 'tax-collector', 'scholar'] });
+    for (let i = 0; i < 20; i++) {
+      expect(['warlord', 'alchemist']).toContain(store().opponentCommander?.id);
+      store().resetGame();
+    }
+    expect(store().disabledCommanders).toEqual(['archmage', 'tax-collector', 'scholar']);
+    // A later new game without the field keeps the saved choice
+    store().startNewGame({ bracket: 'b4' });
+    expect(store().disabledCommanders).toEqual(['archmage', 'tax-collector', 'scholar']);
+    store().startNewGame({ disabledCommanders: [] });
+  });
+});
+
 describe('parseMatch', () => {
   const valid = {
     id: 'm1',

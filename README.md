@@ -34,6 +34,10 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
   resolve. Every effect comes from a card he casts or text printed on one of his permanents, so destroying
   the permanent (or countering the spell) always answers it. Archmage's combo is tracked above the
   battlefield, with a warning when he's one piece away.
+
+  Don't want to face a particular Mowu? Click his name under "Possible Opponent Commanders" in the New Game
+  dialog to switch him off (remembered between games). If every Mowu for a bracket is off, you face a generic
+  opponent with no commander.
 - **Command zone.** Each Mowu has his own commander card. He casts it as soon as he can afford it; if you
   destroy it (or it's countered), it goes back to the command zone and costs {2} more each time (commander
   tax). The turn panel shows where it is and what it costs; on the battlefield it wears a crown, and in combat
