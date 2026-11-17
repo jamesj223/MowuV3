@@ -1,7 +1,6 @@
 # Mowu v3 — Phase 3 Plan: Mowu Plays Like an Opponent
 
-> Status: **draft for owner review**. Nothing here is implemented yet. Decisions marked **(Q)** are open
-> questions, collected at the end.
+> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batch 0 done; Batch 1 next.
 
 ## Goals
 
@@ -10,13 +9,18 @@
    their plans/archetypes yet").
 3. **Mowu's commander is a real card**: cast, buffed, destroyed, recast with commander tax.
 4. **Scaling you can tune in one place**, aimed at the official bracket turn expectations.
-5. Quick win first: **neutral bracket pace summary** on the victory screen (todo).
+5. Quick win first: **neutral bracket stats** on the victory screen (todo).
+
+**Ground rule (ADR-019): no invisible effects.** Everything Mowu does is either casting a card or changing a
+card that is already on the battlefield (including his commander). The player can always see it and answer it
+with the destroy button. No hidden timers, no effects that live only in the turn log.
 
 ## Non-goals (this phase)
 
 - Knowing what the player does. The app still can't see the player's spells (see `CLAUDE.md`). Every new card
   must work as a "fake" card the player resolves themselves.
-- A full combat simulator. A lighter combat-resolution step is included as a stretch batch (Batch 6).
+- Combat resolution (blocking UI, auto-applied damage/poison/commander damage). Moved to **Phase 4** together
+  with the new archetypes; see the answer to Q6 below.
 - New art for every new card. Art stays optional (see "Art budget").
 
 ---
@@ -75,17 +79,27 @@ Action types:
 | `combo-piece` | Archmage reveals Combo Part B | Yes |
 | `attack` | Existing combat phase (unchanged rules, Haste/summoning sickness) | No |
 
-**Guarantee (B2–B5):** if the plan contains no main-phase action, the engine falls back to the archetype's
-cheapest "upkeep" action (a `grow` or a 1-drop). B1 may legitimately return nothing (quiet turn). Custom keeps
-its user-set cadence and uses the engine on its event turns.
+**Guarantee (B2–B5):** every turn includes at least one main-phase action. Because of the ground rule, the
+fallback must itself be a card or a change to a card on the battlefield:
+
+1. cast the cheapest affordable card from the archetype pool (every pool has 1-mana cards, and the budget is
+   at least 1 from turn 1); or
+2. if nothing is castable (e.g. heavy taxes on Mowu himself later on), put a counter on Mowu's commander or one
+   of his permanents (an "equip", "muster" or "study" effect, named on the card that does it).
+
+B1 may legitimately do nothing (a quiet turn). Custom keeps its user-set cadence and uses the engine on its
+event turns.
+
+**Plays per turn** (mana permitting): B1–B2 one play; B3 one main play plus up to one cheaper extra; B4–B5 one
+main play plus up to two cheaper extras.
 
 The opponent-turn modal becomes a short **turn log**: "Main phase: casts X · equips Y" → "Combat: 2 attackers"
 → "Passes". Cards are still shown one at a time, as now. The idle auto-skip remains for quiet B1/Custom turns.
 
 ### 3. Commander zone
 
-Each archetype Mowu (all except the B1 gimmicks, **(Q1)**) gets a **signature commander card**, generalising
-what Tax Collector Mowu already does:
+Every Mowu gets a **signature commander card**, generalising what Tax Collector Mowu already does. The B1
+gimmick Mowus get vanilla commander cards (stats, art and flavour text, no abilities):
 
 - Starts in the command zone. Cast it when the budget allows (its MV + {2} per previous cast).
 - When the player destroys it (existing destroy button), it returns to the command zone, not the graveyard.
@@ -94,23 +108,25 @@ what Tax Collector Mowu already does:
 
 ### 4. Archetype playbooks
 
-A playbook is data, not code: the commander card, a card pool with weights, an **upkeep** action (the cheap
-every-turn fallback), and **signature plays** with turn/bracket gates and cooldowns.
+A playbook is data, not code: the commander card, a card pool with weights, an **upkeep** play (the cheap
+every-turn fallback, always a card or a counter on a card), and **signature plays** with turn/bracket gates
+and cooldowns.
 
-| Mowu | Brackets | Every-turn upkeep | Signature plays | Escalation by bracket |
+| Mowu | Brackets | Every-turn upkeep (card or counter on a card) | Signature plays | Escalation by bracket |
 | --- | --- | --- | --- | --- |
-| **Tax Collector** | B2–B5 | Audit: raise one tax by {1} or cast a small tax | Bureaucratic Delay, Spectral Moat, his commander card | B2 minor taxes → B5 "one spell per turn" lock piece |
-| **Scholar** | B2–B5 | Study: counter on Scholar; at N, a "lesson" triggers (discard/loot/bounce) | Clumsy Thief, Command Zone Recall, "homework" taxes on noncreature spells | Bigger/faster lessons; B5 free disruption |
-| **Mecha-Mowu** | B2–B3 | Cast or recast himself; otherwise equip (+1/+1 counter) | Equipment cards that pump him; Voltron attacks with commander damage | B3 equips grow faster and gain evasion |
-| **Warlord** | B2–B4 | Muster: +1 or +2 soldiers on his token swarm | Anthems, a big token wave, "must attack" swarms | More tokens per turn, earlier anthems |
-| **Alchemist** | B3–B4 | Brew: a Toxic 1-drop, or +1 poison-swarm counter | Toxic creatures, "proliferate" (+1 to your poison if you have any) | Higher Toxic, earlier proliferate |
-| **Archmage** | B4–B5 | Research: a cheap disruption spell or blocker | **Combo pieces**: B4 three parts (A/B/C), B5 two parts | B5 assembles faster; pieces protected by blockers |
-| **Left-Facing / Chair-Sitting** | B1 | None (quiet turns allowed) | Themed, mostly harmless cards | — |
+| **Tax Collector** | B2–B5 | Cast a cheap tax permanent, or add a "tax" counter to one already in play (its tax goes up by {1}) | Bureaucratic Delay, Spectral Moat, his commander card | B2 minor taxes → B5 "one spell per turn" lock piece |
+| **Scholar** | B2–B5 | Cast a cheap "homework" spell, or a "study" counter on the Scholar card; at N counters its printed ability triggers (discard/loot/bounce) | Clumsy Thief, Command Zone Recall, "homework" taxes on noncreature spells | Bigger/faster lessons; B5 free disruption |
+| **Mecha-Mowu** | B2–B3 | Cast or recast himself; otherwise cast a cheap equipment, or "equip" (+1/+1 counter on him) | Equipment cards that pump him; Voltron attacks with commander damage | B3 equips grow faster and gain evasion |
+| **Warlord** | B2–B4 | Cast a soldier token card, or "muster" (+1/+2 on an existing swarm card) | Anthems, a big token wave, "must attack" swarms | More tokens per turn, earlier anthems |
+| **Alchemist** | B3–B4 | Cast a Toxic 1-drop, or "brew" (+1 on a poison swarm card) | Toxic creatures, "proliferate" (+1 to your poison if you have any) | Higher Toxic, earlier proliferate |
+| **Archmage** | B4–B5 | Cast a cheap disruption spell or blocker | **Combo pieces**: B4 three parts (A/B/C), B5 two parts | B5 assembles faster; pieces protected by blockers |
+| **Left-Facing / Chair-Sitting** | B1 | None (quiet turns allowed) | Vanilla commander card, themed and mostly harmless cards | — |
 
 **Combo tracker (Archmage).** Pieces are permanents of different types (creature/artifact/enchantment) so the
 player has realistic answers. The battlefield shows "Combo: 2/3 assembled". If all pieces are on the battlefield
 at the start of Mowu's turn, the combo resolves and the game is **lost** (recorded as a loss with reason
-`combo`). Destroying any piece breaks it. **(Q3)**
+`combo`). When only one piece is missing, a clear **"one piece away"** warning shows on the battlefield and in
+the turn log. Destroying any piece breaks it. Card names telegraph the plan ("Combo Part A: …").
 
 ### 5. Card pool
 
@@ -123,9 +139,11 @@ Rough count to make playbooks work: about **25–35 new cards**, split into:
 
 Cards keep using `computeStats(turn, bracket)`, but the multipliers move into `src/data/tuning.ts`.
 
-**Art budget.** Every new card works with the existing "MS Paint" placeholder. Cards can share art (all seven
-blockers already share `chump-blocker.png`). The plan will include a **"most wanted art"** list (the commander
-cards first) so you can draw at your own pace. **(Q5)**
+**Art budget.** New cards get the same blank MS Paint canvases as before (`npm run placeholders`), which you
+replace on your own time. The script will read the card list from `src/data/cards.ts` instead of its own
+hard-coded list, so new cards get a blank automatically. Cards can share art (all seven blockers share
+`chump-blocker.png`). Batch 4 delivers a **prioritised "most wanted art" list** in `docs/`: commander cards
+first, then the cards you'll see most often.
 
 ### 6. Tuning and playtesting
 
@@ -136,11 +154,12 @@ cards first) so you can draw at your own pace. **(Q5)**
 - Measure with real games: match history already stores bracket and turns. Add a per-bracket view to Stats
   ("B3: 12 games, median win turn 7"). No auto-tuning; you adjust `tuning.ts`.
 
-### 7. Victory screen pace summary (quick win)
+### 7. Victory screen bracket stats (quick win, done)
 
-Replace the current "Faster than … expects / may play above this bracket" message with a neutral line in plain
-colours: **"Bracket 3: Upgraded · expects at least 6 turns · you won on turn 5"**. No verdict. `getPaceVerdict`
-becomes unused and is removed (its tests go with it).
+Plain stats, no verdict: the selected bracket, its expected game length (official minimum, e.g. "8+ turns"),
+and "Won on turn N". Fast and slow wins are both visible at a glance. Wizards gives no upper bound, so no
+"range" is shown; if we later want one it must come from `tuning.ts` and be labelled as Mowu's target, not as
+Wizards' guidance.
 
 ---
 
@@ -148,35 +167,35 @@ becomes unused and is removed (its tests go with it).
 
 Each batch ends with lint, tests, build and a browser check, then updates ROADMAP/ADRs.
 
-- [ ] **Batch 0: Quick win.** Neutral pace summary on the victory screen.
+- [x] **Batch 0: Quick win.** Neutral bracket stats on the victory screen.
 - [ ] **Batch 1: Engine foundation.** Mana value parser, `tuning.ts`, budget, `planOpponentTurn` with the
-  B2–B5 guarantee using existing cards plus shared filler; turn-log UI. *Deliverable: Mowu never idles in B2+.*
+  B2–B5 guarantee using existing cards plus shared filler (all real cards); turn-log UI. *Deliverable: Mowu never idles in B2+.*
 - [ ] **Batch 2: Command zone.** Commander state, tax, recast on destroy, left-panel display. Generalise Tax
   Collector Mowu; add commander cards for the other archetype Mowus.
 - [ ] **Batch 3: Playbooks, one archetype at a time.** Suggested order: Mecha (Voltron, simplest and most
   requested) → Warlord → Archmage (with combo tracker) → Tax Collector (escalation) → Alchemist → Scholar →
   B1 gimmicks.
-- [ ] **Batch 4: Card pool pass.** Remaining new cards, reminder-text rewording, "most wanted art" list.
+- [ ] **Batch 4: Card pool pass.** Remaining new cards, reminder-text rewording, placeholder script reads the
+  card list, "most wanted art" list.
 - [ ] **Batch 5: Commander settings.** Enable/disable individual Mowus (backlog item); the New Game dialog
   already lists possible commanders, so they become toggles.
-- [ ] **Batch 6 (stretch): Combat resolution.** Mark each attacker blocked/unblocked; unblocked damage
-  auto-applies to player life, Toxic to player poison, commander attacks to commander damage. Could move to
-  Phase 4 **(Q6)**.
-- [ ] **Batch 7: Tuning pass** after you've played some games on the new engine.
+- [ ] **Batch 6: Tuning pass** after you've played some games on the new engine.
 
 ---
 
-## Open questions for the owner
+## Owner answers (2026-11-17)
 
-1. **B1 commanders:** should Left-Facing and Chair-Sitting Mowu get commander cards too, or stay
-   "personality only"? (Proposal: personality only; B1 is about theme, not a game plan.)
-2. **Mana budget:** happy with the ramp table above as a starting point? It's the main difficulty dial.
-3. **Archmage's combo:** is "combo assembled = you lose (recorded as a loss)" too harsh for a goldfish tool?
-   Alternative: it deals a big chunk of damage, or forces a "you must answer this next turn" warning first.
-   (Proposal: warning when one piece is missing, loss on assembly; B4 three pieces, B5 two.)
-4. **How many actions per turn?** Proposal: one main play plus at most one cheap extra (two in B5), so turns
-   stay quick to read.
-5. **Art:** OK with placeholders for new cards, plus a prioritised "most wanted art" list?
-6. **Combat resolution:** in Phase 3 (stretch) or Phase 4?
-7. **Archetype gaps:** your todo mentions Flying/Aggro/Chaos, group hug/forced draw and mill. Phase 4 material,
-   or swap one in now?
+1. **B1 commanders:** yes, vanilla commander cards, so each has its own art and flavour text.
+2. **Mana budget:** the ramp table is a fine starting point; tune later.
+3. **Archmage's combo:** loss on assembly is fine, given clear telegraphing (card names plus the
+   "one piece away" warning) and piece count scaling by bracket. Can be softened later.
+4. **Plays per turn:** one big card plus one or two cheaper ones at higher brackets, mana permitting.
+5. **Art:** blank canvases for new cards, which the owner edits later, plus a prioritised list.
+6. **Combat resolution:** left to Claude. Decision: **Phase 4.** Phase 3 already changes the opponent turn a
+   lot; combat resolution is a separate UI that's easier to design once Mowu attacks every turn with
+   commanders, swarms and Toxic creatures, and it pairs naturally with the Phase 4 archetypes (Flying/Aggro).
+   Until then, the attack summary keeps showing attackers and total power and the player applies damage.
+7. **New archetypes** (Flying, Aggro, Chaos, group hug/forced draw, mill): all Phase 4.
+
+Also from this round: the victory screen shows plain stats without wording (done in Batch 0), and upkeep
+plays must be cards or effects on the commander/permanents (the ground rule above, ADR-019).

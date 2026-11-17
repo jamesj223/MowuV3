@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
-import { buildMatchRecord, getPaceVerdict } from '@/logic/game';
+import { buildMatchRecord } from '@/logic/game';
 import { Trophy, RotateCcw, Play, CheckCircle2, Biohazard, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -42,14 +42,16 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
     return 'Defenses Crushed!';
   };
 
+  const turnsText = `${turn} turn${turn === 1 ? '' : 's'}`;
+
   const getVictorySubtitle = () => {
     if (winReason === 'poison') {
-      return `All 3 opponents eliminated with 10 poison counters in ${turn} turns!`;
+      return `All 3 opponents eliminated with 10 poison counters in ${turnsText}!`;
     }
     if (winReason === 'commander_damage') {
-      return `All 3 opponents defeated with 21 commander damage in ${turn} turns!`;
+      return `All 3 opponents defeated with 21 commander damage in ${turnsText}!`;
     }
-    return `You eliminated opponent life in ${turn} turns at ${bracketConfig.tag}!`;
+    return `You eliminated opponent life in ${turnsText} at ${bracketConfig.tag}!`;
   };
 
   return (
@@ -69,23 +71,24 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
         <h2 className="text-2xl font-black text-white tracking-tight">{getVictoryTitle()}</h2>
         <p className="text-sm text-neutral-400 mt-1">{getVictorySubtitle()}</p>
 
-        {/* Pace vs. the bracket's official turn expectation */}
-        {getPaceVerdict(turn, bracket) === 'faster' && (
-          <p className="mt-3 w-full text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
-            Faster than {bracketConfig.name} expects (at least {bracketConfig.minTurns} turns before
-            anyone wins). This deck may play above this bracket.
-          </p>
-        )}
-        {getPaceVerdict(turn, bracket) === 'within' && (
-          <p className="mt-3 w-full text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
-            On pace for {bracketConfig.name} (expects at least {bracketConfig.minTurns} turns).
-          </p>
+        {/* Bracket context: plain stats, no verdict. The player draws their own conclusions. */}
+        {bracketConfig.minTurns !== null && (
+          <div className="mt-4 w-full grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-lg bg-neutral-950/70 border border-neutral-800 px-3 py-2">
+              <span className="block text-[10px] uppercase font-mono text-neutral-500">Bracket</span>
+              <span className="font-semibold text-neutral-200">{bracketConfig.name}</span>
+            </div>
+            <div className="rounded-lg bg-neutral-950/70 border border-neutral-800 px-3 py-2">
+              <span className="block text-[10px] uppercase font-mono text-neutral-500">Expected game</span>
+              <span className="font-semibold text-neutral-200">{bracketConfig.targetTurns}</span>
+            </div>
+          </div>
         )}
 
         {/* Stats Summary Box */}
-        <div className="w-full grid grid-cols-3 gap-2 my-5 p-3 rounded-xl bg-neutral-950/70 border border-neutral-800">
+        <div className="w-full grid grid-cols-3 gap-2 mt-2 mb-5 p-3 rounded-xl bg-neutral-950/70 border border-neutral-800">
           <div>
-            <span className="text-[10px] uppercase font-mono text-neutral-500">Turns</span>
+            <span className="text-[10px] uppercase font-mono text-neutral-500">Won on turn</span>
             <p className="text-2xl font-extrabold font-mono text-emerald-400">{turn}</p>
           </div>
           <div>

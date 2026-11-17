@@ -8,7 +8,6 @@ import {
   getAttackers,
   getEffectiveStats,
   getEligibleCards,
-  getPaceVerdict,
   getEventFrequency,
   hasKeyword,
   isEventTurn,
@@ -146,22 +145,6 @@ describe('pickWeightedCard', () => {
   it('falls back to uniform when all weights are zero', () => {
     const weights = Object.fromEntries(cards.map((c) => [c.category, 0]));
     expect(pickWeightedCard(cards, weights, () => 0).id).toBe(cards[0].id);
-  });
-});
-
-describe('getPaceVerdict', () => {
-  it('treats winning on or before the official minimum turn as too fast', () => {
-    // Bracket 3: "at least six turns", so turn 7 is the first satisfying end
-    expect(getPaceVerdict(6, 'b3')).toBe('faster');
-    expect(getPaceVerdict(7, 'b3')).toBe('within');
-    expect(getPaceVerdict(9, 'b1')).toBe('faster');
-    expect(getPaceVerdict(10, 'b1')).toBe('within');
-  });
-
-  it('has no verdict for cEDH, custom or solitaire', () => {
-    expect(getPaceVerdict(2, 'b5')).toBe('none');
-    expect(getPaceVerdict(2, 'custom')).toBe('none');
-    expect(getPaceVerdict(2, 'off')).toBe('none');
   });
 });
 

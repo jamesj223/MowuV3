@@ -34,11 +34,11 @@
   Bracket 1 (Exhibition) can still have quiet turns, but should lean into its theme when it acts.
   Custom and Solitaire are unchanged. Even if we have to dial down the strength of some cards and add more.
   (Phase 3; see ADR-018.)
-- **Victory screen: neutral bracket pace summary.** Replace the current "faster than this bracket expects /
-  may play above this bracket" message with a plain, matter-of-fact line: the selected bracket, its
-  expected game length, and the turn you actually won on, e.g. *"Bracket 3: Upgraded · expects at least
-  6 turns · you won on turn 5"*. No verdict, no warning colours, no telling the user off; let them draw
-  their own conclusion.
+- [x] **Victory screen: bracket stats, no verdict.** Shows the selected bracket, its expected game length and
+  the turn you won on. No wording, so wins that are too fast *and* too slow are both visible and left for the
+  user to interpret. (Done in Phase 3 Batch 0.)
+- **No invisible opponent effects.** Every Mowu action is a card or a change to a card on the battlefield
+  (e.g. counters on his commander), so the player can always see and answer it (ADR-019).
 - Commanders aren't really playing to their plans/archetypes yet.
     - Voltron Mowu should be playing his commander and buffing it each turn (or recasting it, if it's not already on the battlefield.)
     - Combo Mowu should start assembling pieces of his combo. (e.g. B4 "3 Card Combo Part A/B/C" and B5 "2 Card Combo". Maybe each part is a different type: Creature/Enchantment/Artifact).
@@ -46,7 +46,12 @@
 
 ## Up Next
 
-- More deck/commander archetypes? Maybe Flying, Aggro and Chaos? Group hug/forced draw? Mill?
+- Phase 3 (`docs/PHASE-3-PLAN.md`): opponent turn engine, commander zone, archetype playbooks.
+
+## Phase 4
+
+- New archetypes: Flying, Aggro, Chaos, group hug/forced draw, mill.
+- Combat resolution (see Backlog "Attack modal" item).
 - Archetype specific playbooks:
   - Voltron equipment/aura buffs
   - Combo piece tracker

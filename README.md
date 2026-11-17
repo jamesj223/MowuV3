@@ -50,8 +50,8 @@ The flag button in the navbar concedes the game and logs a loss for the current 
 Brackets follow Wizards of the Coast's Commander Brackets, as revised in the
 [October 21, 2025 update](https://magic.wizards.com/en/news/announcements/commander-brackets-beta-update-october-21-2025).
 Each bracket says how many turns you should expect to play before anyone wins or loses. The victory screen
-compares your winning turn against that, so a deck that consistently wins sooner is probably playing above
-its bracket.
+shows that expectation next to the turn you actually won on, so you can see at a glance whether a deck is
+winning faster or slower than its bracket suggests.
 
 | Bracket | Expect to play at least | Opponent event every |
 | --- | --- | --- |
