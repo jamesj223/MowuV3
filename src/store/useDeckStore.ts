@@ -46,7 +46,7 @@ export const parseDeck = (raw: unknown): DeckProfile | null => {
 /** Validate an imported match record. Returns null if any required field is missing or malformed. */
 export const parseMatch = (raw: unknown): MatchRecord | null => {
   if (!isRecord(raw)) return null;
-  const { id, deckName, turns, startingHealth, finalHealth, damageDealt, bracket, timestamp, eventCount, won, winReason } = raw;
+  const { id, deckName, turns, startingHealth, finalHealth, damageDealt, bracket, timestamp, eventCount, won, winReason, lossReason } = raw;
   if (
     typeof id !== 'string' ||
     typeof deckName !== 'string' ||
@@ -72,6 +72,7 @@ export const parseMatch = (raw: unknown): MatchRecord | null => {
     eventCount: isFiniteNumber(eventCount) ? eventCount : 0,
     won: typeof won === 'boolean' ? won : true,
     winReason: WIN_REASONS.includes(winReason as WinReason) ? (winReason as WinReason) : undefined,
+    lossReason: lossReason === 'combo' || lossReason === 'conceded' ? lossReason : undefined,
   };
 };
 

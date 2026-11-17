@@ -4,10 +4,11 @@
  * Every action is casting a real card (ADR-019): the planner only ever returns
  * cards to cast. Growth over time comes from cards and their printed text.
  */
-import type { EventCardDefinition, EventCategory } from '@/types/card';
+import type { CardRequirement, EventCardDefinition, EventCategory } from '@/types/card';
 import type { CommanderBracket } from '@/types/game';
 import {
   ACTS_EVERY_TURN,
+  ARCHETYPE_CARD_WEIGHT,
   BIG_PLAY_BIAS,
   EXTRA_PLAYS,
   MAIN_PLAY_ONLY_CATEGORIES,
@@ -54,6 +55,8 @@ export interface PlanInput {
   /** Cards Mowu cast recently, with the turn they were cast. */
   recentCasts: { cardId: string; turn: number }[];
   cards: EventCardDefinition[];
+  /** Facts about the board, for card requirements (e.g. no pump spell without a commander). */
+  board?: Partial<Record<CardRequirement, boolean>>;
   /** Mowu's commander, if he has one. Cast from the command zone when affordable. */
   commander?: {
     card: EventCardDefinition;
@@ -68,6 +71,14 @@ export interface TurnPlan {
 }
 
 const isLegendary = (c: EventCardDefinition) => /\bLegendary\b/.test(c.typeLine);
+
+/**
+ * Mowu doesn't cast a second copy of a legendary card, or of a non-creature
+ * permanent (equipment, enchantment, artifact) he already controls: four Laser
+ * Collars is silly. Duplicate creatures are fine.
+ */
+const isRedundantCopy = (c: EventCardDefinition, onBattlefield: Set<string>) =>
+  onBattlefield.has(c.id) && (isLegendary(c) || (c.isPermanent && !/\bCreature\b/.test(c.typeLine)));
 
 /**
  * Decide which cards Mowu casts this turn.
@@ -88,8 +99,14 @@ export const planOpponentTurn = (input: PlanInput, random: () => number): TurnPl
   if (!actsThisTurn) return { budget, plays: [] };
 
   const onBattlefield = new Set(input.battlefieldCardIds);
-  const eligible = getEligibleCards(input.cards, input.turn, input.commanderId).filter(
-    (c) => !(isLegendary(c) && onBattlefield.has(c.id)),
+  const board = {
+    ...input.board,
+    'commander-on-battlefield': input.board?.['commander-on-battlefield'] ?? Boolean(input.commander?.onBattlefield),
+  };
+  const eligible = getEligibleCards(input.cards, input.turn, input.commanderId, input.bracket).filter(
+    (c) =>
+      !isRedundantCopy(c, onBattlefield) &&
+      (c.requires ?? []).every((req) => board[req]),
   );
   if (eligible.length === 0) return { budget, plays: [] };
 
@@ -97,7 +114,9 @@ export const planOpponentTurn = (input: PlanInput, random: () => number): TurnPl
     input.recentCasts.filter((r) => input.turn - r.turn <= RECENT_TURNS).map((r) => r.cardId),
   );
   const baseWeight = (c: EventCardDefinition) =>
-    (input.cardWeights[c.category] ?? 1) * (recent.has(c.id) ? RECENT_CARD_WEIGHT : 1);
+    (input.cardWeights[c.category] ?? 1) *
+    (recent.has(c.id) ? RECENT_CARD_WEIGHT : 1) *
+    (c.exclusiveTo?.includes(input.commanderId ?? '') ? ARCHETYPE_CARD_WEIGHT : 1);
 
   const mv = (c: EventCardDefinition) => getManaValue(c.manaCost);
   const affordable = eligible.filter((c) => mv(c) <= budget);

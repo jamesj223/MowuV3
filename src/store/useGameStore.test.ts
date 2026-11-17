@@ -5,6 +5,7 @@ vi.mock('canvas-confetti', () => ({ default: vi.fn() }));
 import { useGameStore } from './useGameStore';
 import { parseMatch } from './useDeckStore';
 import { getCommanderCard } from '@/data/commanderCards';
+import { MOWU_COMMANDERS } from '@/data/commanders';
 import { getManaValue } from '@/logic/opponent';
 
 const store = () => useGameStore.getState();
@@ -110,6 +111,8 @@ describe('opponent turns (Phase 3 engine)', () => {
 
   it('casts every planned card in order, then moves on (never "idle" after casting)', () => {
     store().startNewGame({ startingOpponentHealth: 999, bracket: 'b5' });
+    // Pin a commander without a combo, so the game can't end mid-test
+    useGameStore.setState({ opponentCommander: MOWU_COMMANDERS.find((c) => c.id === 'tax-collector')! });
     let sawMultiple = false;
     for (let t = 1; t <= 8; t++) {
       store().nextTurn();
@@ -131,10 +134,10 @@ describe('opponent turns (Phase 3 engine)', () => {
       turnPhase: 'opponent',
       opponentTurnState: {
         phase: 'event', hasEvent: true, attackers: [], idleText: null, eventTriggered: false,
-        manaBudget: 1, plannedCardIds: [], casts: [],
+        manaBudget: 1, plannedCardIds: ['suspicious-meat-pie'], casts: [],
       },
     });
-    store().triggerEvent('suspicious-meat-pie');
+    store().advanceOpponentPhase(); // casts the planned Meat Pie
     expect(store().opponentHealth).toBe(96);
     store().counterCurrentCard();
     expect(store().opponentHealth).toBe(90);
@@ -213,6 +216,120 @@ describe('commander zone', () => {
       finishOpponentTurn();
     }
     throw new Error('Commander was never cast');
+  });
+});
+
+describe('archetype playbooks in play', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  const finishOpponentTurn = () => {
+    for (let i = 0; i < 10 && store().turnPhase === 'opponent'; i++) store().advanceOpponentPhase();
+  };
+  const playAs = (commanderId: string, bracket: 'b2' | 'b3' | 'b4' | 'b5') => {
+    store().startNewGame({ startingOpponentHealth: 999, bracket });
+    useGameStore.setState({ opponentCommander: MOWU_COMMANDERS.find((c) => c.id === commanderId)! });
+  };
+  /** Put a card straight onto Mowu's battlefield (as if cast on an earlier turn). */
+  const putOntoBattlefield = (cardId: string) => {
+    store().triggerEvent(cardId);
+    store().closeDrawnCard();
+  };
+
+  it("Mecha-Mowu's upkeep trigger grows him every turn", () => {
+    playAs('mecha', 'b2');
+    putOntoBattlefield('commander-mecha');
+    const mecha = () => store().activePermanents.find((p) => p.isCommander)!;
+    expect(mecha().counters).toBe(0);
+    // (Mowu may also cast Oil Change on these turns, so counters are "at least")
+    store().nextTurn();
+    expect(store().opponentTurnState?.upkeepLog).toEqual(['Mecha-Mowu gets a +1/+1 counter.']);
+    expect(mecha().counters).toBeGreaterThanOrEqual(1);
+    finishOpponentTurn();
+    const before = mecha().counters;
+    store().nextTurn();
+    expect(store().opponentTurnState?.upkeepLog).toEqual(['Mecha-Mowu gets a +1/+1 counter.']);
+    expect(mecha().counters).toBeGreaterThanOrEqual(before + 1);
+  });
+
+  it("Warlord's upkeep makes Pup Soldiers, which merge into one stack once they can attack", () => {
+    playAs('warlord', 'b2');
+    putOntoBattlefield('commander-warlord');
+    const pups = () => store().activePermanents.filter((p) => p.cardId === 'token-pup-soldier');
+    store().nextTurn();
+    finishOpponentTurn();
+    store().nextTurn();
+    finishOpponentTurn();
+    // Two upkeeps (plus any token spells): all pups in a single stack after the merge at upkeep
+    expect(pups().length).toBeLessThanOrEqual(2);
+    expect(pups().reduce((n, p) => n + p.counters, 0)).toBeGreaterThanOrEqual(2);
+  });
+
+  it('countering a token spell removes the tokens it made', () => {
+    playAs('warlord', 'b3');
+    useGameStore.setState({
+      turnPhase: 'opponent',
+      opponentTurnState: {
+        phase: 'event', hasEvent: true, attackers: [], idleText: null, eventTriggered: false,
+        manaBudget: 2, plannedCardIds: ['warlord-muster'], casts: [],
+      },
+    });
+    store().advanceOpponentPhase();
+    expect(store().activePermanents.find((p) => p.cardId === 'token-pup-soldier')?.counters).toBe(3);
+    expect(store().opponentTurnState?.casts[0].effectLog).toEqual(['Mowu creates 3 Pup Soldier tokens.']);
+    store().counterCurrentCard();
+    expect(store().activePermanents.some((p) => p.cardId === 'token-pup-soldier')).toBe(false);
+  });
+
+  it('poison from Mowu turns on the player poison tracker and can be countered away', () => {
+    playAs('alchemist', 'b3');
+    useGameStore.setState({ poisonCounters: 2, trackPlayerPoison: false });
+    putOntoBattlefield('alchemist-bubbling-cauldron');
+    store().nextTurn();
+    expect(store().opponentTurnState?.upkeepLog).toEqual([
+      'Bubbling Cauldron: You get a poison counter (now 3).',
+    ]);
+    expect(store().poisonCounters).toBeGreaterThanOrEqual(3); // Vial of Venom may add more
+    expect(store().trackPlayerPoison).toBe(true);
+  });
+
+  it("Scholar's lesson fires every third upkeep", () => {
+    playAs('scholar', 'b2');
+    putOntoBattlefield('commander-scholar');
+    const lessons: string[] = [];
+    for (let t = 0; t < 3; t++) {
+      store().nextTurn();
+      lessons.push(...(store().opponentTurnState?.upkeepLog ?? []).filter((l) => l.includes('Lesson')));
+      finishOpponentTurn();
+    }
+    // At least one lesson in three upkeeps (Study Group can speed it up), never with 3+ counters left over
+    expect(lessons.length).toBeGreaterThanOrEqual(1);
+    expect(store().activePermanents.find((p) => p.isCommander)?.counters).toBeLessThan(3 + 2);
+  });
+
+  it("Archmage's combo: assembled pieces make you lose at the start of his next turn", () => {
+    playAs('archmage', 'b5');
+    putOntoBattlefield('archmage-combo-a');
+    putOntoBattlefield('archmage-combo-b');
+    expect(store().isGameOver).toBe(false);
+    store().nextTurn();
+    expect(store()).toMatchObject({ isGameOver: true, lossReason: 'combo', winReason: null });
+    // Healing the opponent afterwards can't un-lose the game
+    store().applyOpponentHealthChange(5);
+    expect(store().isGameOver).toBe(true);
+  });
+
+  it('destroying a piece before his turn stops the combo', () => {
+    playAs('archmage', 'b5');
+    putOntoBattlefield('archmage-combo-a');
+    putOntoBattlefield('archmage-combo-b');
+    const pieceB = store().activePermanents.find((p) => p.comboPiece === 'B')!;
+    store().dismissPermanent(pieceB.instanceId);
+    store().nextTurn();
+    expect(store().isGameOver).toBe(false);
   });
 });
 

@@ -6,6 +6,8 @@ import {
   createSnapshot,
   extractKeywords,
   getAttackers,
+  getBuffsFor,
+  getComboStatus,
   getEffectiveStats,
   getEligibleCards,
   getEventFrequency,
@@ -18,6 +20,8 @@ import {
 import { EVENT_CARDS } from '@/data/cards';
 import { COMMANDER_CARDS, getCommanderCard } from '@/data/commanderCards';
 import { MOWU_COMMANDERS } from '@/data/commanders';
+import { ARCHETYPE_CARDS, TOKEN_CARDS, TOKENS_BY_ID } from '@/data/archetypeCards';
+import { getManaValue } from './opponent';
 import type { ActivePermanent } from '@/types/card';
 import { COMMANDER_BRACKETS, type CommanderBracket } from '@/types/game';
 
@@ -164,6 +168,50 @@ describe('official bracket data', () => {
   });
 });
 
+describe('static buffs (equipment, anthems)', () => {
+  const commander = perm({ instanceId: 'cmd', isCommander: true, power: 3, toughness: 3, counterType: 'plus-one', counters: 1 });
+  const boots = perm({
+    instanceId: 'boots', power: undefined, toughness: undefined, renderedText: 'Equipment',
+    buff: { target: 'commander', power: 2, toughness: 0, keywords: ['Haste', 'Trample'] },
+  });
+  const pups = perm({ instanceId: 'pups', cardId: 'token-pup-soldier', isToken: true, power: 1, toughness: 1, counterType: 'swarm', counters: 3, turnPlayed: 4, enteredOnOpponentTurn: true });
+  const horn = perm({
+    instanceId: 'horn', power: undefined, toughness: undefined,
+    buff: { target: 'tokens', tokenId: 'token-pup-soldier', power: 1, toughness: 0, keywords: ['Haste'] },
+  });
+
+  it('applies to the right creatures only', () => {
+    const field = [commander, boots, pups, horn];
+    expect(getBuffsFor(commander, field)).toHaveLength(1);
+    expect(getBuffsFor(pups, field)).toHaveLength(1);
+    expect(getBuffsFor(boots, field)).toHaveLength(0); // not a creature
+  });
+
+  it('adds to effective stats on top of +1/+1 counters', () => {
+    expect(getEffectiveStats(commander, [commander, boots])).toEqual({ power: 6, toughness: 4 });
+    expect(getEffectiveStats(commander)).toEqual({ power: 4, toughness: 4 });
+  });
+
+  it('granted keywords show in combat and granted Haste lifts summoning sickness', () => {
+    expect(getAttackers([pups], 4)).toHaveLength(0); // sick
+    const attackers = getAttackers([pups, horn], 4);
+    expect(attackers).toHaveLength(1);
+    expect(attackers[0]).toMatchObject({ power: 2, count: 3, keywords: 'Haste' });
+    expect(getAttackers([{ ...commander, turnPlayed: 1 }, boots], 4)[0].keywords).toBe('Haste, Trample');
+  });
+});
+
+describe('combo status', () => {
+  const piece = (p: 'A' | 'B' | 'C') => perm({ instanceId: p, comboPiece: p, power: undefined, toughness: undefined });
+
+  it('needs three pieces in B4 and two in B5', () => {
+    expect(getComboStatus([piece('A'), piece('B')], 'b4')).toMatchObject({ oneAway: true, assembled: false, missing: ['C'] });
+    expect(getComboStatus([piece('A'), piece('B')], 'b5')).toMatchObject({ assembled: true });
+    expect(getComboStatus([piece('A')], 'b5')).toMatchObject({ oneAway: true });
+    expect(getComboStatus([], 'b4')).toMatchObject({ active: false, assembled: false });
+  });
+});
+
 describe('getEligibleCards', () => {
   const tax = { ...EVENT_CARDS[0], id: 'tax-signature', minTurn: 3, signatureCommanderId: 'tax-collector' };
   const pool = [...EVENT_CARDS, tax];
@@ -176,6 +224,17 @@ describe('getEligibleCards', () => {
 
   it('keeps commander cards out of the random pool', () => {
     for (const c of COMMANDER_CARDS) expect(EVENT_CARDS.map((e) => e.id)).not.toContain(c.id);
+  });
+
+  it('limits archetype cards to their Mowu and to their bracket range', () => {
+    const ids = (commanderId: string, bracket: 'b2' | 'b3' | 'b5') =>
+      getEligibleCards(EVENT_CARDS, 10, commanderId, bracket).map((c) => c.id);
+    expect(ids('mecha', 'b2')).toContain('mecha-rocket-boots');
+    expect(ids('warlord', 'b2')).not.toContain('mecha-rocket-boots');
+    expect(ids('mecha', 'b2')).not.toContain('mecha-jet-pack'); // B3+
+    expect(ids('mecha', 'b3')).toContain('mecha-jet-pack');
+    expect(ids('tax-collector', 'b3')).not.toContain('tax-rule-of-paw'); // B5 only
+    expect(ids('tax-collector', 'b5')).toContain('tax-rule-of-paw');
   });
 
   it('respects minimum turns', () => {
@@ -305,6 +364,43 @@ describe('commander cards', () => {
   });
 });
 
+describe('archetype playbooks', () => {
+  it('every Mowu has a cheap (≤2 mana, from turn 2) card of his own in every bracket he plays', () => {
+    for (const commander of MOWU_COMMANDERS) {
+      for (const bracket of commander.brackets) {
+        const own = getEligibleCards(EVENT_CARDS, 2, commander.id, bracket).filter(
+          (c) => c.exclusiveTo?.includes(commander.id) && getManaValue(c.manaCost) <= 2 && !c.requires?.length,
+        );
+        expect(own.length, `${commander.id} ${bracket}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('only reference tokens that exist and Mowus that exist', () => {
+    const commanderIds = new Set(MOWU_COMMANDERS.map((c) => c.id));
+    for (const card of [...ARCHETYPE_CARDS, ...COMMANDER_CARDS]) {
+      for (const id of card.exclusiveTo ?? []) expect(commanderIds.has(id), card.id).toBe(true);
+      const stats = card.computeStats(5, 'b4');
+      for (const effect of [...(stats.effects ?? []), ...(stats.upkeep ?? [])]) {
+        if (effect.type === 'create-tokens') expect(TOKENS_BY_ID[effect.tokenId], card.id).toBeDefined();
+      }
+    }
+  });
+
+  it('no card has an activated ability (ADR-019)', () => {
+    for (const card of [...EVENT_CARDS, ...COMMANDER_CARDS, ...TOKEN_CARDS]) {
+      expect(card.computeStats(5, 'b4').renderedText, card.id).not.toMatch(/\}:/);
+    }
+  });
+
+  it('combo pieces are legendary, one per letter, and C only exists up to B4', () => {
+    const pieces = ARCHETYPE_CARDS.filter((c) => c.comboPiece);
+    expect(pieces.map((c) => c.comboPiece).sort()).toEqual(['A', 'B', 'C']);
+    for (const p of pieces) expect(p.typeLine).toMatch(/^Legendary/);
+    expect(pieces.find((c) => c.comboPiece === 'C')?.maxBracket).toBe(4);
+  });
+});
+
 describe('card data', () => {
   it('has unique ids', () => {
     const ids = EVENT_CARDS.map((c) => c.id);
@@ -322,7 +418,8 @@ describe('card data', () => {
       for (const bracket of Object.keys(COMMANDER_BRACKETS) as CommanderBracket[]) {
         for (const turn of [1, 5, 12]) {
           const stats = card.computeStats(turn, bracket);
-          expect(stats.renderedText.length, card.id).toBeGreaterThan(0);
+          // Vanilla creatures have no rules text; everything else must say what it does
+          if (stats.power === undefined) expect(stats.renderedText.length, card.id).toBeGreaterThan(0);
         }
       }
     }

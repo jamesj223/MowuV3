@@ -361,7 +361,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                               </p>
                             ) : (
                               <p className="text-sm font-mono font-bold text-rose-400">
-                                Conceded on turn {m.turns}
+                                {m.lossReason === 'combo' ? 'Lost to combo on turn' : 'Conceded on turn'} {m.turns}
                               </p>
                             )}
                             <p className="text-xs text-neutral-400">

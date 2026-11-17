@@ -1,6 +1,6 @@
 # Mowu v3 — Phase 3 Plan: Mowu Plays Like an Opponent
 
-> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–2 done; Batch 3 next.
+> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–3 done; Batch 4 next.
 
 ## Goals
 
@@ -172,7 +172,7 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
   B2–B5 guarantee (cast the cheapest card), multiple plays per turn, turn-log UI, "Countered" button. *Deliverable: Mowu never idles in B2+.*
 - [x] **Batch 2: Command zone.** Commander state, tax, recast on destroy, left-panel display. Generalise Tax
   Collector Mowu; add commander cards for the other archetype Mowus.
-- [ ] **Batch 3: Playbooks, one archetype at a time.** Suggested order: Mecha (Voltron, simplest and most
+- [x] **Batch 3: Playbooks, one archetype at a time.** Suggested order: Mecha (Voltron, simplest and most
   requested) → Warlord → Archmage (with combo tracker) → Tax Collector (escalation) → Alchemist → Scholar →
   B1 gimmicks.
 - [ ] **Batch 4: Card pool pass.** Remaining new cards, reminder-text rewording, placeholder script reads the
@@ -182,6 +182,23 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
 - [ ] **Batch 6: Tuning pass** after you've played some games on the new engine.
 
 ---
+
+## Batch 3 notes (as built)
+
+- **Automatic effects** (`src/logic/effects.ts`): counters (commander, self, tax permanents), token creation
+  (stacked, merged at Mowu's upkeep once they can all attack), player poison (incl. "proliferate"), Mowu's
+  life, and a threshold effect for Scholar's lessons. Each cast records an undo, so Countered reverses it.
+  Player-only actions (discard, pay, untap) stay as card text. ADR-022.
+- **Static buffs** on permanents (equipment → commander; anthems → creatures or a token type) feed effective
+  P/T and keywords, so granted Haste also lifts summoning sickness.
+- **Planner**: bracket ranges (`minBracket`/`maxBracket`), `exclusiveTo` archetype cards weighted ×3
+  (`ARCHETYPE_CARD_WEIGHT`), card requirements (e.g. no pump spell without a commander), and no second copy of
+  a non-creature permanent he already controls.
+- **Archmage**: combo pieces are legendary permanents; an assembled combo makes the player lose at the start
+  of Mowu's next turn (`lossReason: 'combo'`, recorded as a loss). Banner shows progress and the one-away
+  warning.
+- 33 archetype cards + 2 tokens, all with blank art canvases. Observed in playtests: Mecha-Mowu can reach
+  ~14/12 by turn 6 at B3, and B4–B5 boards still fill with generic blockers. Both are tuning-pass items.
 
 ## Owner answers (2026-11-17)
 

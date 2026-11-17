@@ -26,6 +26,6 @@ export const concedeGame = (): void => {
   if (!window.confirm(`Concede on turn ${game.turn} and record a loss for "${game.currentDeckName || 'Unnamed Deck'}"?`)) {
     return;
   }
-  useDeckStore.getState().recordMatch(buildMatchRecord(game, false));
+  useDeckStore.getState().recordMatch(buildMatchRecord(game, false, 'conceded'));
   game.resetGame();
 };

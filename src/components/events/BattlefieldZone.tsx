@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
-import { getEffectiveStats } from '@/logic/game';
+import { getBuffsFor, getComboStatus, getEffectiveStats } from '@/logic/game';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 import { ShieldAlert, Trash2, History, Sparkles, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
@@ -18,6 +18,7 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
     dismissPermanent,
     clearAllPermanents,
     triggerEvent,
+    bracket,
   } = useGameStore(
     useShallow((s) => ({
       activePermanents: s.activePermanents,
@@ -26,10 +27,12 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
       dismissPermanent: s.dismissPermanent,
       clearAllPermanents: s.clearAllPermanents,
       triggerEvent: s.triggerEvent,
+      bracket: s.bracket,
     })),
   );
 
   const [showHistory, setShowHistory] = useState(false);
+  const combo = getComboStatus(activePermanents, bracket);
 
   return (
     <div className="flex flex-col bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 sm:p-5 shadow-xl backdrop-blur-sm h-full justify-between min-h-[500px]">
@@ -76,6 +79,33 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
         </div>
       </div>
 
+      {/* Archmage's combo tracker: always telegraphed */}
+      {combo.active && (
+        <div
+          className={`mt-3 rounded-xl border px-3 py-2 text-xs flex items-center justify-between gap-2 ${
+            combo.assembled
+              ? 'bg-rose-500/15 border-rose-500/50 text-rose-200'
+              : combo.oneAway
+                ? 'bg-amber-500/15 border-amber-500/50 text-amber-200'
+                : 'bg-purple-500/10 border-purple-500/30 text-purple-200'
+          }`}
+        >
+          <span className="font-semibold">
+            Combo: {combo.present.length}/{combo.required.length} pieces
+            <span className="ml-2 font-mono font-normal opacity-80">
+              {combo.required.map((p) => (combo.present.includes(p) ? `[${p}]` : ` ${p} `)).join(' ')}
+            </span>
+          </span>
+          <span>
+            {combo.assembled
+              ? "Assembled! You lose at the start of Mowu's next turn unless you destroy a piece."
+              : combo.oneAway
+                ? `One piece away (missing ${combo.missing[0]}).`
+                : 'Destroy a piece to set him back.'}
+          </span>
+        </div>
+      )}
+
       {/* Main Playmat Field: Expands fully across widescreen and wraps smoothly */}
       <div className="flex-grow py-4 overflow-y-auto max-h-[620px] scrollbar-thin">
         {activePermanents.length === 0 ? (
@@ -98,7 +128,11 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
         ) : (
           <div className="flex flex-wrap gap-3.5 items-start justify-start pt-2 pl-2">
             {activePermanents.map((perm) => {
-              const stats = getEffectiveStats(perm);
+              const stats = getEffectiveStats(perm, activePermanents);
+              const buffs = getBuffsFor(perm, activePermanents);
+              const buffP = buffs.reduce((n, b) => n + b.power, 0);
+              const buffT = buffs.reduce((n, b) => n + b.toughness, 0);
+              const buffKeywords = [...new Set(buffs.flatMap((b) => b.keywords ?? []))];
               return (
               <div key={perm.instanceId} className="shrink-0 relative">
                 {perm.isCommander && (
@@ -129,6 +163,16 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
                     else adjustPermanentCounters(perm.instanceId, action === 'increment' ? 1 : -1);
                   }}
                 />
+                {buffs.length > 0 && (
+                  <p
+                    className="mt-1 max-w-44 text-[10px] text-sky-300 font-mono truncate"
+                    title="From Mowu's equipment and enchantments; destroy those to remove it"
+                  >
+                    {(buffP || buffT) ? `+${buffP}/+${buffT}` : ''}
+                    {(buffP || buffT) && buffKeywords.length ? ' · ' : ''}
+                    {buffKeywords.join(', ')}
+                  </p>
+                )}
               </div>
               );
             })}

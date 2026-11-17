@@ -40,10 +40,10 @@
 - **Every Mowu action needs a source the player can answer** (ADR-019): either a card being cast (counterable)
   or printed text on a permanent (removable). No tokens/counters appearing from nowhere, no eminence-style
   command-zone abilities, no activated abilities.
-- Commanders aren't really playing to their plans/archetypes yet.
-    - Voltron Mowu should be playing his commander and buffing it each turn (or recasting it, if it's not already on the battlefield.)
-    - Combo Mowu should start assembling pieces of his combo. (e.g. B4 "3 Card Combo Part A/B/C" and B5 "2 Card Combo". Maybe each part is a different type: Creature/Enchantment/Artifact).
-    - Other commanders/archetypes should have similar signature playbooks.
+- [x] Commanders play to their plans/archetypes (Phase 3 Batch 3).
+    - [x] Voltron Mowu casts his commander, grows it each upkeep, recasts it, and suits up with equipment.
+    - [x] Combo Mowu assembles pieces (B4 three, B5 two) of different types, with a tracker and warning.
+    - [x] Every other Mowu has a signature playbook (taxes, study/lessons, tokens, poison, B1 themes).
 
 ## Up Next
 
@@ -53,11 +53,11 @@
 
 - New archetypes: Flying, Aggro, Chaos, group hug/forced draw, mill.
 - Combat resolution (see Backlog "Attack modal" item).
-- Archetype specific playbooks:
-  - Voltron equipment/aura buffs
-  - Combo piece tracker
-  - Stax escalation levels
-  - Token swarm multiplication
+- [x] Archetype specific playbooks (Phase 3 Batch 3):
+  - [x] Voltron equipment buffs
+  - [x] Combo piece tracker
+  - [x] Stax escalation (tax counters + Surprise Audit, Rule of Paw at B5)
+  - [x] Token swarm multiplication
 
 ## Backlog
 

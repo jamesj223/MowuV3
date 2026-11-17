@@ -209,4 +209,41 @@ describe('planOpponentTurn', () => {
       expect(plan.plays.map((c) => c.id)).toEqual(['cmd', 'filler']);
     });
   });
+
+  describe('requirements and archetype preference', () => {
+    it("skips cards whose requirements aren't met", () => {
+      const pump = card('pump', '{1}', { requires: ['commander-on-battlefield'] });
+      const filler = card('filler', '{1}');
+      for (let seed = 1; seed <= 30; seed++) {
+        const plan = planOpponentTurn(input({ bracket: 'b2', cards: [pump, filler] }), seeded(seed));
+        expect(plan.plays.map((c) => c.id)).toEqual(['filler']);
+      }
+      const withBoard = planOpponentTurn(
+        input({ bracket: 'b2', cards: [pump], board: { 'commander-on-battlefield': true } }),
+        seeded(1),
+      );
+      expect(withBoard.plays.map((c) => c.id)).toEqual(['pump']);
+    });
+
+    it("doesn't cast a second copy of an equipment/enchantment he controls, but will of a creature", () => {
+      const collar = card('collar', '{1}', { typeLine: 'Artifact — Equipment', isPermanent: true });
+      const rat = card('rat', '{1}', { typeLine: 'Creature — Rat', isPermanent: true });
+      for (let seed = 1; seed <= 30; seed++) {
+        const plan = planOpponentTurn(
+          input({ bracket: 'b2', cards: [collar, rat], battlefieldCardIds: ['collar', 'rat'] }),
+          seeded(seed),
+        );
+        expect(plan.plays.map((c) => c.id)).toEqual(['rat']);
+      }
+    });
+
+    it("favours the commander's own archetype cards", () => {
+      const own = card('own', '{1}', { exclusiveTo: ['mecha'] });
+      const generic = card('generic', '{1}');
+      const picks = Array.from({ length: 400 }, (_, i) =>
+        planOpponentTurn(input({ bracket: 'b2', commanderId: 'mecha', cards: [own, generic] }), seeded(i)).plays[0].id,
+      );
+      expect(picks.filter((id) => id === 'own').length / picks.length).toBeGreaterThan(0.65);
+    });
+  });
 });

@@ -44,6 +44,8 @@ export const OpponentTurnModal: React.FC = () => {
   if (!opponentTurnState) return null;
 
   const { phase, attackers, idleText, casts, plannedCardIds, manaBudget } = opponentTurnState;
+  const upkeepLog = opponentTurnState.upkeepLog ?? [];
+  const currentCast = currentDrawnCard ? casts.find((c) => c.instanceId === currentDrawnCard.instanceId) : undefined;
   const castNumber = casts.length;
   const castsPlanned = plannedCardIds.length;
   const moreCardsComing = phase === 'event' && castNumber < castsPlanned;
@@ -167,6 +169,27 @@ export const OpponentTurnModal: React.FC = () => {
                   />
                 </div>
               )}
+
+              {/* What the card did automatically */}
+              {currentCast?.effectLog && currentCast.effectLog.length > 0 && (
+                <ul className="w-full text-xs text-neutral-300 space-y-0.5">
+                  {currentCast.effectLog.map((line) => (
+                    <li key={line}>→ {line}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Start of turn: printed upkeep triggers on Mowu's permanents */}
+          {upkeepLog.length > 0 && (
+            <div className="rounded-xl bg-neutral-950/60 border border-neutral-800 p-2.5">
+              <p className="text-[10px] uppercase font-mono text-neutral-500 mb-1">Upkeep</p>
+              <ul className="space-y-0.5 text-xs text-neutral-300">
+                {upkeepLog.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -179,6 +202,9 @@ export const OpponentTurnModal: React.FC = () => {
                   <li key={c.instanceId} className={c.countered ? 'text-neutral-500 line-through' : 'text-neutral-300'}>
                     {c.name}
                     {c.countered && <span className="ml-1 no-underline text-[10px] text-sky-400">(countered)</span>}
+                    {!c.countered && c.effectLog && c.effectLog.length > 0 && (
+                      <span className="block pl-3 text-[11px] text-neutral-500">{c.effectLog.join(' ')}</span>
+                    )}
                   </li>
                 ))}
               </ul>

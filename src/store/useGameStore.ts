@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import confetti from 'canvas-confetti';
-import type { CommanderBracket, GameSettings, TurnSnapshot, WinReason } from '@/types/game';
-import type { ActivePermanent, ResolvedEvent } from '@/types/card';
+import type { CommanderBracket, GameSettings, LossReason, TurnSnapshot, WinReason } from '@/types/game';
+import type { ActivePermanent, CardEffect, EffectUndo, ResolvedEvent } from '@/types/card';
 import type { MowuCommander, OpponentTurnState } from '@/types/opponent';
 import { EVENT_CARDS } from '@/data/cards';
 import { findCardDefinition, getCommanderCard } from '@/data/commanderCards';
@@ -14,6 +14,7 @@ import {
   checkVictory,
   createSnapshot,
   getAttackers,
+  getComboStatus,
   getEligibleCards,
   pickWeightedCard,
   rewindSnapshots,
@@ -21,6 +22,8 @@ import {
   type Triple,
 } from '@/logic/game';
 import { planOpponentTurn } from '@/logic/opponent';
+import { applyEffects, emptyUndo, mergeTokenStacks, undoEffects } from '@/logic/effects';
+import { TOKENS_BY_ID } from '@/data/archetypeCards';
 
 /** How long the floating +/- delta badge stays visible after the last change. */
 const DELTA_DISPLAY_MS = 1600;
@@ -43,6 +46,8 @@ interface GameStoreState {
   totalDamageDealt: number;
   isGameOver: boolean;
   winReason: WinReason | null;
+  /** Set when the player lost (e.g. Archmage's combo resolved). */
+  lossReason: LossReason | null;
   gameStartTime: number;
 
   // 3-Opponent Alt-Win Trackers (Pod)
@@ -91,7 +96,8 @@ interface GameStoreState {
   adjustPermanentCounters: (instanceId: string, amount: number) => void;
   dismissPermanent: (instanceId: string) => void;
   clearAllPermanents: () => void;
-  triggerEvent: (forceCardId?: string) => void;
+  /** Mowu casts a card (random, or `forceCardId`). Returns what it did automatically. */
+  triggerEvent: (forceCardId?: string) => { log: string[]; undo: EffectUndo } | undefined;
   closeDrawnCard: () => void;
   resetGame: () => void;
   startNewGame: (settings: Partial<GameSettings> & { deckName?: string }) => void;
@@ -143,6 +149,7 @@ const createFreshGame = (
     isDeltaVisible: false,
     isGameOver: false,
     winReason: null,
+    lossReason: null,
     gameStartTime: now,
     playerLife: settings.startingPlayerLife,
     poisonCounters: 0,
@@ -190,6 +197,10 @@ const computeOpponentTurn = (state: GameStoreState): OpponentTurnState => {
       commanderId: state.opponentCommander?.id,
       cardWeights: state.opponentCommander?.cardWeights ?? {},
       battlefieldCardIds: state.activePermanents.map((p) => p.cardId),
+      board: {
+        'tax-permanent': state.activePermanents.some((p) => p.counterType === 'tax'),
+        'player-poisoned': state.poisonCounters > 0,
+      },
       recentCasts,
       cards: EVENT_CARDS,
       commander: commanderCard
@@ -234,6 +245,11 @@ export const useGameStore = create<GameStoreState>()(
           state.trackOpponentPoison,
           state.trackOpponentCommanderDamage,
         );
+        if (get().lossReason) {
+          // A lost game stays lost; life/tracker tweaks can't turn it into a win
+          set(patch);
+          return;
+        }
         if (win.isWon && !get().isGameOver) celebrate();
         set({ ...patch, isGameOver: win.isWon, winReason: win.reason });
       };
@@ -255,13 +271,54 @@ export const useGameStore = create<GameStoreState>()(
         });
       };
 
+      let instanceSeq = 0;
+      const newInstanceId = () =>
+        `inst-${Date.now()}-${(instanceSeq++).toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+
+      /** Apply automatic card effects to the game (see src/logic/effects.ts). */
+      const applyCardEffects = (effects: CardEffect[], sourceInstanceId?: string) => {
+        const state = get();
+        const result = applyEffects(
+          effects,
+          { permanents: state.activePermanents, playerPoison: state.poisonCounters },
+          {
+            sourceInstanceId,
+            turn: state.turn,
+            enteredOnOpponentTurn: state.turnPhase === 'opponent',
+            tokens: TOKENS_BY_ID,
+            newId: newInstanceId,
+          },
+        );
+        set({
+          activePermanents: result.permanents,
+          poisonCounters: result.playerPoison,
+          // Make sure the player can see poison Mowu gives them
+          trackPlayerPoison: state.trackPlayerPoison || result.playerPoison > state.poisonCounters,
+        });
+        if (result.opponentLife !== 0) get().applyOpponentHealthChange(result.opponentLife, 'card');
+        return { log: result.log, undo: result.undo };
+      };
+
+      /** Start of Mowu's turn: tidy token stacks, then fire printed upkeep triggers. */
+      const runUpkeep = (): string[] => {
+        set({ activePermanents: mergeTokenStacks(get().activePermanents) });
+        const log: string[] = [];
+        for (const perm of get().activePermanents.filter((p) => p.upkeep?.length)) {
+          // The permanent may have been changed by an earlier trigger; it's still the source
+          const { log: lines } = applyCardEffects(perm.upkeep!, perm.instanceId);
+          // Name the source permanent, unless the line already starts with it
+          for (const line of lines) log.push(line.startsWith(perm.name) ? line : `${perm.name}: ${line}`);
+        }
+        return log;
+      };
+
       /** Cast the next card in this opponent turn's plan. Returns false if none are left. */
       const castNextPlannedCard = (): boolean => {
         const turnState = get().opponentTurnState;
         if (!turnState) return false;
         const cardId = turnState.plannedCardIds[turnState.casts.length];
         if (!cardId) return false;
-        get().triggerEvent(cardId);
+        const result = get().triggerEvent(cardId);
         const cast = get().currentDrawnCard;
         set((current) => ({
           opponentTurnState: current.opponentTurnState
@@ -271,7 +328,14 @@ export const useGameStore = create<GameStoreState>()(
                 casts: cast
                   ? [
                       ...current.opponentTurnState.casts,
-                      { instanceId: cast.instanceId, cardId, name: cast.name, countered: false },
+                      {
+                        instanceId: cast.instanceId,
+                        cardId,
+                        name: cast.name,
+                        countered: false,
+                        effectLog: result?.log ?? [],
+                        undo: result?.undo,
+                      },
                     ]
                   : current.opponentTurnState.casts,
               }
@@ -329,15 +393,30 @@ export const useGameStore = create<GameStoreState>()(
             return;
           }
 
-          const oppTurn = computeOpponentTurn(state);
+          // Beginning of Mowu's turn: an assembled combo resolves before anything else
+          if (getComboStatus(state.activePermanents, state.bracket).assembled) {
+            clearDeltaTimer();
+            set({
+              isGameOver: true,
+              lossReason: 'combo',
+              winReason: null,
+              accumulatedDelta: 0,
+              isDeltaVisible: false,
+            });
+            return;
+          }
 
-          // Solitaire mode with nothing attacking: skip the opponent turn entirely
-          if (state.bracket === 'off' && oppTurn.attackers.length === 0) {
+          set({ turnPhase: 'opponent' });
+          const upkeepLog = runUpkeep();
+          const oppTurn = { ...computeOpponentTurn(get()), upkeepLog };
+
+          // Solitaire mode with nothing attacking or triggering: skip the opponent turn entirely
+          if (state.bracket === 'off' && oppTurn.attackers.length === 0 && upkeepLog.length === 0) {
             advanceToNextTurn();
             return;
           }
 
-          set({ turnPhase: 'opponent', opponentTurnState: oppTurn });
+          set({ opponentTurnState: oppTurn });
 
           if (oppTurn.hasEvent) castNextPlannedCard();
         },
@@ -387,12 +466,24 @@ export const useGameStore = create<GameStoreState>()(
           const card = state.currentDrawnCard;
           if (!turnState || turnState.phase !== 'event' || !card) return;
 
+          // Reverse anything the card did automatically (tokens, counters, poison, life)
+          const cast = turnState.casts.find((c) => c.instanceId === card.instanceId);
+          const undo = cast?.undo ?? emptyUndo();
+          const reverted = undoEffects(undo, {
+            permanents: get().activePermanents,
+            playerPoison: get().poisonCounters,
+          });
+          set({ poisonCounters: reverted.playerPoison });
+          if (undo.opponentLife) get().applyOpponentHealthChange(-undo.opponentLife, 'card');
+
           if ('counters' in card) {
             // A countered permanent spell never enters the battlefield
-            set({ activePermanents: state.activePermanents.filter((p) => p.instanceId !== card.instanceId) });
+            set({ activePermanents: reverted.permanents.filter((p) => p.instanceId !== card.instanceId) });
           } else {
-            set({ eventHistory: state.eventHistory.filter((e) => e.instanceId !== card.instanceId) });
-            if (card.healAmount) get().applyOpponentHealthChange(-card.healAmount, 'card');
+            set({
+              activePermanents: reverted.permanents,
+              eventHistory: get().eventHistory.filter((e) => e.instanceId !== card.instanceId),
+            });
           }
 
           set((current) => ({
@@ -461,16 +552,23 @@ export const useGameStore = create<GameStoreState>()(
 
         triggerEvent: (forceCardId) => {
           const state = get();
-          const eligible = getEligibleCards(EVENT_CARDS, state.turn, state.opponentCommander?.id);
+          const eligible = getEligibleCards(EVENT_CARDS, state.turn, state.opponentCommander?.id, state.bracket);
 
           const forced = forceCardId ? findCardDefinition(forceCardId, EVENT_CARDS) : undefined;
           const cardDef =
             forced ?? pickWeightedCard(eligible, state.opponentCommander?.cardWeights ?? {}, Math.random);
 
           const computed = cardDef.computeStats(state.turn, state.bracket);
-          const instanceId = `inst-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+          const instanceId = newInstanceId();
           const eventsTriggered = state.eventsTriggered + 1;
           const isCommander = cardDef.id === getCommanderCard(state.opponentCommander?.id)?.id;
+          // Opponent life gain (Meat Pie) is an effect like any other, so countering undoes it
+          const effects: CardEffect[] = [
+            ...(computed.effects ?? []),
+            ...(computed.healAmount && computed.healAmount > 0
+              ? [{ type: 'opponent-life' as const, amount: computed.healAmount }]
+              : []),
+          ];
 
           if (cardDef.isPermanent) {
             const perm: ActivePermanent = {
@@ -489,6 +587,9 @@ export const useGameStore = create<GameStoreState>()(
               turnPlayed: state.turn,
               enteredOnOpponentTurn: state.turnPhase === 'opponent',
               isCommander,
+              upkeep: computed.upkeep,
+              buff: computed.buff,
+              comboPiece: cardDef.comboPiece,
             };
             set({
               activePermanents: [perm, ...state.activePermanents],
@@ -497,7 +598,7 @@ export const useGameStore = create<GameStoreState>()(
               // Casting from the command zone raises commander tax, even if it's then countered
               commanderTimesCast: state.commanderTimesCast + (isCommander ? 1 : 0),
             });
-            return;
+            return effects.length > 0 ? applyCardEffects(effects, instanceId) : { log: [], undo: emptyUndo() };
           }
 
           const resolved: ResolvedEvent = {
@@ -510,17 +611,12 @@ export const useGameStore = create<GameStoreState>()(
             turnResolved: state.turn,
             healAmount: computed.healAmount,
           };
-
-          if (computed.healAmount && computed.healAmount > 0) {
-            // Opponent life gain: changes life only, never erases the player's damage stats
-            get().applyOpponentHealthChange(computed.healAmount, 'card');
-          }
-
-          set((current) => ({
-            eventHistory: [resolved, ...current.eventHistory],
+          set({
+            eventHistory: [resolved, ...state.eventHistory],
             currentDrawnCard: resolved,
             eventsTriggered,
-          }));
+          });
+          return applyCardEffects(effects);
         },
 
         closeDrawnCard: () => {

@@ -57,6 +57,12 @@ export const RECENT_CARD_WEIGHT = 0.25;
  */
 export const BIG_PLAY_BIAS = 0.5;
 
+/**
+ * A Mowu's own archetype cards (`exclusiveTo`) are this many times likelier
+ * than generic cards, so each commander visibly plays to his plan.
+ */
+export const ARCHETYPE_CARD_WEIGHT = 3;
+
 /** Card categories never cast as a cheap extra (they should be the turn's headline). */
 export const MAIN_PLAY_ONLY_CATEGORIES = ['board_wipe'] as const;
 

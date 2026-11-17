@@ -208,6 +208,7 @@ export const MOWU_COMMANDERS: MowuCommander[] = [
       'Archmage Mowu stacks seventeen triggers and dares you to follow...',
     ],
     cardWeights: {
+      combo: 4.0,
       disruption: 2.0,
       removal: 1.8,
       board_wipe: 1.5,

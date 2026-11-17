@@ -2,9 +2,9 @@
  * Pure game-logic helpers. Nothing in here touches the store, timers, the DOM
  * or Math.random directly (randomness is injected), so it is all unit-testable.
  */
-import type { CommanderBracket, MatchRecord, TurnSnapshot, WinReason } from '@/types/game';
+import type { CommanderBracket, LossReason, MatchRecord, TurnSnapshot, WinReason } from '@/types/game';
 import { COMMANDER_BRACKETS } from '@/types/game';
-import type { ActivePermanent, EventCardDefinition, EventCategory } from '@/types/card';
+import type { ActivePermanent, ComboPiece, EventCardDefinition, EventCategory, StaticBuff } from '@/types/card';
 import type { AttackingCreature } from '@/types/opponent';
 
 export type Triple = [number, number, number];
@@ -62,37 +62,68 @@ export const checkVictory = (
  * Power/toughness of a single permanent after counters.
  * +1/+1 counters pump the creature; swarm counters count copies instead.
  */
-export const getEffectiveStats = (
-  p: Pick<ActivePermanent, 'power' | 'toughness' | 'counters' | 'counterType'>,
-): { power?: number; toughness?: number } => {
-  if (p.counterType === 'plus-one') {
-    return {
-      power: p.power === undefined ? undefined : p.power + p.counters,
-      toughness: p.toughness === undefined ? undefined : p.toughness + p.counters,
-    };
-  }
-  return { power: p.power, toughness: p.toughness };
+/** Does `buff` (printed on some permanent) apply to permanent `p`? */
+const buffApplies = (buff: StaticBuff, p: ActivePermanent): boolean => {
+  if (p.power === undefined) return false; // only creatures
+  if (buff.target === 'commander') return Boolean(p.isCommander);
+  if (buff.target === 'tokens') return Boolean(p.isToken) && (!buff.tokenId || buff.tokenId === p.cardId);
+  return true; // 'creatures'
 };
 
-/** A creature that entered during this opponent turn can't attack unless it has Haste. */
-export const isSummoningSick = (p: ActivePermanent, currentTurn: number): boolean =>
+/** Static buffs from Mowu's permanents (equipment, anthems) that apply to `p`. */
+export const getBuffsFor = (p: ActivePermanent, battlefield: ActivePermanent[]): StaticBuff[] =>
+  battlefield.flatMap((source) => (source.buff && buffApplies(source.buff, p) ? [source.buff] : []));
+
+/**
+ * Power/toughness of a single permanent after counters and static buffs.
+ * +1/+1 counters pump the creature; swarm counters count copies instead.
+ * Pass the battlefield to include buffs from equipment/anthems.
+ */
+export const getEffectiveStats = (
+  p: Pick<ActivePermanent, 'power' | 'toughness' | 'counters' | 'counterType'> & Partial<ActivePermanent>,
+  battlefield: ActivePermanent[] = [],
+): { power?: number; toughness?: number } => {
+  const plusOne = p.counterType === 'plus-one' ? p.counters : 0;
+  const buffs = p.instanceId ? getBuffsFor(p as ActivePermanent, battlefield) : [];
+  const bonusP = buffs.reduce((sum, b) => sum + b.power, 0);
+  const bonusT = buffs.reduce((sum, b) => sum + b.toughness, 0);
+  return {
+    power: p.power === undefined ? undefined : p.power + plusOne + bonusP,
+    toughness: p.toughness === undefined ? undefined : p.toughness + plusOne + bonusT,
+  };
+};
+
+/** Rules text plus keywords granted by buffs, for keyword checks. */
+export const getEffectiveKeywordText = (p: ActivePermanent, battlefield: ActivePermanent[] = []): string => {
+  const granted = getBuffsFor(p, battlefield).flatMap((b) => b.keywords ?? []);
+  return granted.length > 0 ? `${p.renderedText}\n${granted.join(', ')}` : p.renderedText;
+};
+
+/** A creature that entered during this opponent turn can't attack unless it has Haste (printed or granted). */
+export const isSummoningSick = (
+  p: ActivePermanent,
+  currentTurn: number,
+  battlefield: ActivePermanent[] = [],
+): boolean =>
   p.turnPlayed === currentTurn &&
   Boolean(p.enteredOnOpponentTurn) &&
-  !hasKeyword(p.renderedText, 'Haste');
+  !hasKeyword(getEffectiveKeywordText(p, battlefield), 'Haste');
 
 /**
  * Creatures that attack on the opponent's turn: positive power, no Defender,
- * not summoning sick, and (for swarms) at least one body left.
+ * not summoning sick, and (for swarms) at least one body left. Buffs from the
+ * rest of the battlefield (equipment, anthems) are included.
  */
 export const getAttackers = (
   permanents: ActivePermanent[],
   currentTurn: number,
 ): AttackingCreature[] =>
   permanents.flatMap((p) => {
-    const { power, toughness } = getEffectiveStats(p);
+    const { power, toughness } = getEffectiveStats(p, permanents);
     if (power === undefined || power <= 0) return [];
-    if (hasKeyword(p.renderedText, 'Defender')) return [];
-    if (isSummoningSick(p, currentTurn)) return [];
+    const keywordText = getEffectiveKeywordText(p, permanents);
+    if (hasKeyword(keywordText, 'Defender')) return [];
+    if (isSummoningSick(p, currentTurn, permanents)) return [];
     const count = p.counterType === 'swarm' ? p.counters : 1;
     if (count <= 0) return [];
     return [
@@ -103,7 +134,7 @@ export const getAttackers = (
         toughness: toughness ?? 0,
         count,
         isCommander: Boolean(p.isCommander),
-        keywords: extractKeywords(p.renderedText),
+        keywords: extractKeywords(keywordText),
       },
     ];
   });
@@ -111,22 +142,46 @@ export const getAttackers = (
 export const totalAttackPower = (attackers: AttackingCreature[]): number =>
   attackers.reduce((sum, a) => sum + a.power * a.count, 0);
 
+/** Power level 1–5 for card bracket ranges. Custom counts as Core (2). */
+export const bracketLevel = (bracket: CommanderBracket): number =>
+  ({ b1: 1, b2: 2, b3: 3, b4: 4, b5: 5, custom: 2, off: 2 })[bracket];
+
 /**
- * Cards the opponent may cast this turn: past their minimum turn, and signature
- * cards (e.g. Tax Collector Mowu) only for the commander they belong to.
+ * Cards the opponent may cast this turn: within their bracket range, past their
+ * minimum turn, and archetype cards only for the Mowus they belong to.
  * Relaxes the turn requirement, then everything, rather than returning nothing.
  */
 export const getEligibleCards = (
   cards: EventCardDefinition[],
   turn: number,
   commanderId: string | undefined,
+  bracket?: CommanderBracket,
 ): EventCardDefinition[] => {
+  const level = bracket ? bracketLevel(bracket) : undefined;
   const allowedForCommander = cards.filter(
-    (c) => !c.signatureCommanderId || c.signatureCommanderId === commanderId,
+    (c) =>
+      (!c.signatureCommanderId || c.signatureCommanderId === commanderId) &&
+      (!c.exclusiveTo || (commanderId !== undefined && c.exclusiveTo.includes(commanderId))) &&
+      (level === undefined || ((c.minBracket ?? 1) <= level && level <= (c.maxBracket ?? 5))),
   );
   const eligible = allowedForCommander.filter((c) => (c.minTurn ?? 1) <= turn);
   if (eligible.length > 0) return eligible;
   return allowedForCommander.length > 0 ? allowedForCommander : cards;
+};
+
+/** Archmage's combo: which pieces are needed at this bracket, and how many are on the battlefield. */
+export const getComboStatus = (permanents: ActivePermanent[], bracket: CommanderBracket) => {
+  const required: ComboPiece[] = bracket === 'b5' ? ['A', 'B'] : ['A', 'B', 'C'];
+  const present = required.filter((piece) => permanents.some((p) => p.comboPiece === piece));
+  const missing = required.filter((piece) => !present.includes(piece));
+  return {
+    required,
+    present,
+    missing,
+    active: present.length > 0,
+    oneAway: missing.length === 1,
+    assembled: missing.length === 0,
+  };
 };
 
 /** Generic weighted pick. `random` returns [0, 1). Uniform if all weights are zero. */
@@ -240,6 +295,7 @@ export const buildMatchRecord = (
     eventsTriggered: number;
   },
   won: boolean,
+  lossReason?: LossReason,
 ): Omit<MatchRecord, 'id' | 'timestamp'> => ({
   deckName: game.currentDeckName || 'Unnamed Deck',
   turns: game.turn,
@@ -250,4 +306,5 @@ export const buildMatchRecord = (
   winReason: won ? (game.winReason ?? 'life') : undefined,
   eventCount: game.eventsTriggered,
   won,
+  lossReason: won ? undefined : (lossReason ?? 'conceded'),
 });

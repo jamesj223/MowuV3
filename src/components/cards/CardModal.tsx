@@ -2,6 +2,7 @@ import React from 'react';
 import { PlaytestCard } from './PlaytestCard';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 import { getEffectiveStats } from '@/logic/game';
+import { useGameStore } from '@/store/useGameStore';
 import { X, Sparkles } from 'lucide-react';
 
 interface CardModalProps {
@@ -11,8 +12,9 @@ interface CardModalProps {
 }
 
 export const CardModal: React.FC<CardModalProps> = ({ card, onClose, isNewDraw = false }) => {
+  const battlefield = useGameStore((s) => s.activePermanents);
   if (!card) return null;
-  const stats = 'counters' in card ? getEffectiveStats(card) : {};
+  const stats = 'counters' in card ? getEffectiveStats(card, battlefield) : {};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200">

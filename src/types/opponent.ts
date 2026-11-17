@@ -1,5 +1,5 @@
 import type { CommanderBracket } from './game';
-import type { EventCategory } from './card';
+import type { EffectUndo, EventCategory } from './card';
 
 export interface MowuCommander {
   id: string;
@@ -32,6 +32,9 @@ export interface OpponentCast {
   cardId: string;
   name: string;
   countered: boolean;
+  /** What the card did automatically (turn log) and how to reverse it if countered. */
+  effectLog?: string[];
+  undo?: EffectUndo;
 }
 
 export interface OpponentTurnState {
@@ -43,4 +46,5 @@ export interface OpponentTurnState {
   manaBudget: number;               // Mowu's mana this turn
   plannedCardIds: string[];         // cards Mowu will cast this turn, in order
   casts: OpponentCast[];            // cards cast so far this turn (turn log)
+  upkeepLog?: string[];             // printed upkeep triggers that fired this turn
 }

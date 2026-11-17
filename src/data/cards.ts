@@ -1,7 +1,9 @@
 import type { EventCardDefinition } from '@/types/card';
 import { bracketMultiplier } from '@/data/tuning';
+import { ARCHETYPE_CARDS } from '@/data/archetypeCards';
 
-export const EVENT_CARDS: EventCardDefinition[] = [
+/** Cards any Mowu can cast. */
+export const GENERIC_CARDS: EventCardDefinition[] = [
   {
     id: 'homing-fireball-pigeon',
     name: 'Homing Fireball Pigeon',
@@ -203,12 +205,14 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     category: 'tax',
     isPermanent: true,
     minTurn: 2,
+    counterType: 'tax',
     flavorText: 'Please fill out form 27-B in triplicate before casting your spell.',
-    templateText: 'Noncreature spells cost {X} more to cast.',
+    templateText: 'Noncreature spells you cast cost {1} more for each tax counter on Bureaucratic Delay.',
     computeStats: (_turn, bracket) => {
       const tax = bracket === 'b5' ? 3 : bracket === 'b4' ? 2 : 1;
       return {
-        renderedText: `Noncreature spells you cast cost {${tax}} more to cast.`,
+        renderedText: `Bureaucratic Delay enters with ${tax === 1 ? 'a tax counter' : `${tax} tax counters`}.\nNoncreature spells you cast cost {1} more for each tax counter on Bureaucratic Delay.`,
+        counters: tax,
       };
     },
   },
@@ -353,3 +357,6 @@ export const EVENT_CARDS: EventCardDefinition[] = [
     }),
   },
 ];
+
+/** Mowu's whole card pool: generic cards plus every archetype's own cards (filtered per commander). */
+export const EVENT_CARDS: EventCardDefinition[] = [...GENERIC_CARDS, ...ARCHETYPE_CARDS];

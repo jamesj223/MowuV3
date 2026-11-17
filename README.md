@@ -16,8 +16,24 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
   Outside Bracket 1 he casts something every turn. You can mark any card he casts as **Countered** (`C`), and it
   doesn't resolve. Then his non-Defender creatures attack. Creatures he casts during his own turn have summoning
   sickness unless they have Haste.
-- **Mowu commanders.** Each one biases which kinds of card appear (taxes, creatures, removal…) and has its own
-  idle flavour text.
+- **Mowu commanders and playbooks.** Each Mowu plays to an archetype with his own cards (alongside a shared
+  generic pool), and his commander card carries his plan:
+
+  | Mowu | Brackets | Plan |
+  | --- | --- | --- |
+  | Left-Facing, Chair-Sitting | 1 | Vanilla commanders and harmless themed cards; quiet turns |
+  | Tax Collector | 2–5 | Tax permanents with tax counters that Surprise Audit raises; Rule of Paw lock at B5 |
+  | Scholar | 2–5 | Study counters on Scholar Mowu (upkeep); every third, a lesson makes you discard |
+  | Mecha-Mowu | 2–3 | Grows each upkeep; equipment pumps him (Haste, Trample, Flying at B3) |
+  | Warlord | 2–4 | Pup Soldier tokens each upkeep and from spells; War Horn and Pack Banner anthems |
+  | Alchemist | 3–4 | Toxic creatures and spores; "proliferate" your poison |
+  | Archmage | 4–5 | Combo pieces A, B (and C at B4): if all are on his battlefield at the start of his turn, you lose |
+
+  Effects the app can apply happen automatically (counters, tokens, your poison, Mowu's life) and are listed
+  in the turn log; anything only you can do (discard, pay, untap restrictions) is on the card for you to
+  resolve. Every effect comes from a card he casts or text printed on one of his permanents, so destroying
+  the permanent (or countering the spell) always answers it. Archmage's combo is tracked above the
+  battlefield, with a warning when he's one piece away.
 - **Command zone.** Each Mowu has his own commander card. He casts it as soon as he can afford it; if you
   destroy it (or it's countered), it goes back to the command zone and costs {2} more each time (commander
   tax). The turn panel shows where it is and what it costs; on the battlefield it wears a crown, and in combat
@@ -96,6 +112,8 @@ src/
   data/cards.ts        event card definitions and their bracket/turn scaling
   data/commanders.ts   Mowu commander variants, card weights and idle texts
   data/commanderCards.ts  each Mowu's commander card
+  data/archetypeCards.ts  each Mowu's own cards, plus tokens
+  logic/effects.ts     automatic card effects (counters, tokens, poison, life) and their undo
   components/          UI (counters, battlefield, modals, stats)
   hooks/useHotkeys.ts  keyboard shortcuts
 public/cards/          card art served at runtime (PNG)

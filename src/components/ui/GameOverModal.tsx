@@ -3,7 +3,7 @@ import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import { buildMatchRecord } from '@/logic/game';
-import { Trophy, RotateCcw, Play, CheckCircle2, Biohazard, Crown } from 'lucide-react';
+import { Trophy, RotateCcw, Play, CheckCircle2, Biohazard, Crown, Skull } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
 interface GameOverModalProps {
@@ -13,9 +13,10 @@ interface GameOverModalProps {
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame, onRestart }) => {
-  const { turn, totalDamageDealt, bracket, winReason, eventsTriggered } = useGameStore(
+  const { turn, totalDamageDealt, bracket, winReason, lossReason, eventsTriggered } = useGameStore(
     useShallow((s) => ({
       turn: s.turn,
+      lossReason: s.lossReason,
       totalDamageDealt: s.totalDamageDealt,
       bracket: s.bracket,
       winReason: s.winReason,
@@ -32,11 +33,15 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
 
   const handleSave = () => {
     if (saved) return;
-    recordMatch(buildMatchRecord(useGameStore.getState(), true));
+    const game = useGameStore.getState();
+    recordMatch(buildMatchRecord(game, !game.lossReason, game.lossReason ?? undefined));
     setSaved(true);
   };
 
+  const isLoss = Boolean(lossReason);
+
   const getVictoryTitle = () => {
+    if (lossReason === 'combo') return "Mowu's Combo Resolved";
     if (winReason === 'poison') return 'Infect Victory!';
     if (winReason === 'commander_damage') return 'Voltron Victory!';
     return 'Defenses Crushed!';
@@ -45,6 +50,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
   const turnsText = `${turn} turn${turn === 1 ? '' : 's'}`;
 
   const getVictorySubtitle = () => {
+    if (lossReason === 'combo') {
+      return `Every combo piece was on the battlefield at the start of Mowu's turn ${turn}.`;
+    }
     if (winReason === 'poison') {
       return `All 3 opponents eliminated with 10 poison counters in ${turnsText}!`;
     }
@@ -56,10 +64,18 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative flex flex-col w-full max-w-md bg-neutral-900 border-2 border-amber-500/50 rounded-2xl p-6 shadow-2xl text-center items-center">
+      <div className={`relative flex flex-col w-full max-w-md bg-neutral-900 border-2 ${isLoss ? 'border-rose-500/50' : 'border-amber-500/50'} rounded-2xl p-6 shadow-2xl text-center items-center`}>
         {/* Victory Icon */}
-        <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-400 text-amber-400 flex items-center justify-center mb-4 shadow-[0_0_24px_rgba(245,158,11,0.4)] animate-bounce">
-          {winReason === 'poison' ? (
+        <div
+          className={`w-16 h-16 rounded-full border-2 flex items-center justify-center mb-4 ${
+            isLoss
+              ? 'bg-rose-500/20 border-rose-400 text-rose-400'
+              : 'bg-amber-500/20 border-amber-400 text-amber-400 shadow-[0_0_24px_rgba(245,158,11,0.4)] animate-bounce'
+          }`}
+        >
+          {isLoss ? (
+            <Skull className="w-8 h-8 text-rose-400" />
+          ) : winReason === 'poison' ? (
             <Biohazard className="w-8 h-8 text-lime-400" />
           ) : winReason === 'commander_damage' ? (
             <Crown className="w-8 h-8 text-amber-400" />
@@ -88,7 +104,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
         {/* Stats Summary Box */}
         <div className="w-full grid grid-cols-3 gap-2 mt-2 mb-5 p-3 rounded-xl bg-neutral-950/70 border border-neutral-800">
           <div>
-            <span className="text-[10px] uppercase font-mono text-neutral-500">Won on turn</span>
+            <span className="text-[10px] uppercase font-mono text-neutral-500">{isLoss ? 'Lost on turn' : 'Won on turn'}</span>
             <p className="text-2xl font-extrabold font-mono text-emerald-400">{turn}</p>
           </div>
           <div>
@@ -112,7 +128,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
           }`}
         >
           <CheckCircle2 className="w-4 h-4" />
-          <span>{saved ? 'Recorded to Match History' : 'Save Run to History'}</span>
+          <span>{saved ? 'Recorded to Match History' : isLoss ? 'Save Loss to History' : 'Save Run to History'}</span>
         </button>
 
         {/* Action Buttons */}

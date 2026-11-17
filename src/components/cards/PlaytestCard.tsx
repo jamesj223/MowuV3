@@ -140,12 +140,18 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
               }}
               disabled={counters === 0}
               className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-neutral-800 text-[10px] text-white hover:bg-neutral-700 disabled:opacity-30"
-              title={counterType === 'swarm' ? 'Remove one from the swarm' : 'Remove a +1/+1 counter'}
+              title={counterType === 'swarm' ? 'Remove one from the swarm' : `Remove a ${counterType === 'plus-one' ? '+1/+1' : counterType} counter`}
             >
               −
             </button>
             <span className="min-w-4 text-center font-mono">
-              {counterType === 'swarm' ? `×${counters}` : `+${counters}`}
+              {counterType === 'swarm'
+                ? `×${counters}`
+                : counterType === 'tax'
+                  ? `tax ${counters}`
+                  : counterType === 'study'
+                    ? `study ${counters}`
+                    : `+${counters}`}
             </span>
             <button
               type="button"
@@ -154,7 +160,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
                 onCounterChange(1);
               }}
               className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[10px] text-neutral-950 hover:bg-amber-400"
-              title={counterType === 'swarm' ? 'Add one to the swarm' : 'Add a +1/+1 counter'}
+              title={counterType === 'swarm' ? 'Add one to the swarm' : `Add a ${counterType === 'plus-one' ? '+1/+1' : counterType} counter`}
             >
               +
             </button>

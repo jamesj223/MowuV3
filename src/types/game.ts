@@ -2,6 +2,9 @@ export type CommanderBracket = 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'custom' | 'of
 
 export type WinReason = 'life' | 'poison' | 'commander_damage';
 
+/** How a game was lost: Archmage's combo resolved, or the player conceded. */
+export type LossReason = 'combo' | 'conceded';
+
 export interface BracketConfig {
   id: CommanderBracket;
   name: string;
@@ -168,6 +171,7 @@ export interface MatchRecord {
   timestamp: string;
   eventCount: number;
   won: boolean;                    // false = conceded / lost
+  lossReason?: LossReason;         // only set for losses
 }
 
 export interface DeckProfile {
