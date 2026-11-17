@@ -14,7 +14,8 @@ the owner in MS Paint (`public/cards/*.png`) for a homemade playtest-card look.
 
 Design intent for the opponent: **outside of Bracket 1, Mowu does *something* every turn** (not necessarily a
 bomb: a cheap creature, a counter, a small tax all count), and each Mowu commander plays to its archetype.
-Bracket 1 may have quiet turns. See ADR-018 and `docs/todo.md`.
+Bracket 1 may have quiet turns. Every Mowu action must come from casting a card or from printed text on a
+permanent: never effects that appear from nowhere (ADR-019). See ADR-018 and `docs/todo.md`.
 
 ## Where things are
 

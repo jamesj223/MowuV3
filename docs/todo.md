@@ -37,8 +37,9 @@
 - [x] **Victory screen: bracket stats, no verdict.** Shows the selected bracket, its expected game length and
   the turn you won on. No wording, so wins that are too fast *and* too slow are both visible and left for the
   user to interpret. (Done in Phase 3 Batch 0.)
-- **No invisible opponent effects.** Every Mowu action is a card or a change to a card on the battlefield
-  (e.g. counters on his commander), so the player can always see and answer it (ADR-019).
+- **Every Mowu action needs a source the player can answer** (ADR-019): either a card being cast (counterable)
+  or printed text on a permanent (removable). No tokens/counters appearing from nowhere, no eminence-style
+  command-zone abilities, no activated abilities.
 - Commanders aren't really playing to their plans/archetypes yet.
     - Voltron Mowu should be playing his commander and buffing it each turn (or recasting it, if it's not already on the battlefield.)
     - Combo Mowu should start assembling pieces of his combo. (e.g. B4 "3 Card Combo Part A/B/C" and B5 "2 Card Combo". Maybe each part is a different type: Creature/Enchantment/Artifact).

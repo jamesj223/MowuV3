@@ -11,9 +11,11 @@
 4. **Scaling you can tune in one place**, aimed at the official bracket turn expectations.
 5. Quick win first: **neutral bracket stats** on the victory screen (todo).
 
-**Ground rule (ADR-019): no invisible effects.** Everything Mowu does is either casting a card or changing a
-card that is already on the battlefield (including his commander). The player can always see it and answer it
-with the destroy button. No hidden timers, no effects that live only in the turn log.
+**Ground rule (ADR-019): every action has a source the player can answer.** Mowu acts only by **casting a
+card** (counterable; the turn screen gets a "Countered" button) or through **printed text on a permanent** on
+the battlefield (static or triggered; answered by removing the permanent). No effects without a card behind
+them, no eminence-style command-zone abilities, and no activated abilities. Mowu changes existing permanents
+only by casting other cards (equipment, auras, pump spells) or via their own printed text.
 
 ## Non-goals (this phase)
 
@@ -74,21 +76,19 @@ Action types:
 | --- | --- | --- |
 | `cast` | Cast Generic Chump Blocker; cast Wrath of Oops | Yes (MV) |
 | `cast-commander` | Cast Mecha-Mowu from the command zone | MV + commander tax |
-| `grow` | Put a +1/+1 counter on Mecha-Mowu; Warlord's soldiers +2 | Small/zero |
-| `escalate` | Bureaucratic Delay's tax goes from {1} to {2} | Small |
-| `combo-piece` | Archmage reveals Combo Part B | Yes |
+| `combo-piece` | Archmage casts Combo Part B | Yes |
 | `attack` | Existing combat phase (unchanged rules, Haste/summoning sickness) | No |
 
-**Guarantee (B2–B5):** every turn includes at least one main-phase action. Because of the ground rule, the
-fallback must itself be a card or a change to a card on the battlefield:
+Growth (counters, pumps, more tokens) happens only through cards: an equipment or token spell, or triggered
+text printed on a permanent (e.g. "At the beginning of your upkeep, put a +1/+1 counter on Mecha-Mowu").
 
-1. cast the cheapest affordable card from the archetype pool (every pool has 1-mana cards, and the budget is
-   at least 1 from turn 1); or
-2. if nothing is castable (e.g. heavy taxes on Mowu himself later on), put a counter on Mowu's commander or one
-   of his permanents (an "equip", "muster" or "study" effect, named on the card that does it).
-
+**Guarantee (B2–B5):** every turn includes at least one cast. If nothing fits the budget, Mowu casts the
+cheapest eligible card anyway; every card pool includes 1-mana cards, so in practice this rarely triggers.
 B1 may legitimately do nothing (a quiet turn). Custom keeps its user-set cadence and uses the engine on its
 event turns.
+
+**Countering.** Each card Mowu casts can be marked "Countered" on the turn screen: a permanent never enters
+the battlefield, and a spell's effect (e.g. Meat Pie's life gain) is undone.
 
 **Plays per turn** (mana permitting): B1–B2 one play; B3 one main play plus up to one cheaper extra; B4–B5 one
 main play plus up to two cheaper extras.
@@ -108,19 +108,19 @@ gimmick Mowus get vanilla commander cards (stats, art and flavour text, no abili
 
 ### 4. Archetype playbooks
 
-A playbook is data, not code: the commander card, a card pool with weights, an **upkeep** play (the cheap
-every-turn fallback, always a card or a counter on a card), and **signature plays** with turn/bracket gates
-and cooldowns.
+A playbook is data, not code: the commander card, a card pool with weights (always including cheap cards for
+the every-turn guarantee), and **signature plays** with turn/bracket gates and cooldowns. Ongoing growth comes
+from printed text on Mowu's permanents, never from the playbook itself.
 
-| Mowu | Brackets | Every-turn upkeep (card or counter on a card) | Signature plays | Escalation by bracket |
+| Mowu | Brackets | Cheap every-turn plays (cards) | Signature plays | Escalation by bracket |
 | --- | --- | --- | --- | --- |
-| **Tax Collector** | B2–B5 | Cast a cheap tax permanent, or add a "tax" counter to one already in play (its tax goes up by {1}) | Bureaucratic Delay, Spectral Moat, his commander card | B2 minor taxes → B5 "one spell per turn" lock piece |
-| **Scholar** | B2–B5 | Cast a cheap "homework" spell, or a "study" counter on the Scholar card; at N counters its printed ability triggers (discard/loot/bounce) | Clumsy Thief, Command Zone Recall, "homework" taxes on noncreature spells | Bigger/faster lessons; B5 free disruption |
-| **Mecha-Mowu** | B2–B3 | Cast or recast himself; otherwise cast a cheap equipment, or "equip" (+1/+1 counter on him) | Equipment cards that pump him; Voltron attacks with commander damage | B3 equips grow faster and gain evasion |
-| **Warlord** | B2–B4 | Cast a soldier token card, or "muster" (+1/+2 on an existing swarm card) | Anthems, a big token wave, "must attack" swarms | More tokens per turn, earlier anthems |
-| **Alchemist** | B3–B4 | Cast a Toxic 1-drop, or "brew" (+1 on a poison swarm card) | Toxic creatures, "proliferate" (+1 to your poison if you have any) | Higher Toxic, earlier proliferate |
-| **Archmage** | B4–B5 | Cast a cheap disruption spell or blocker | **Combo pieces**: B4 three parts (A/B/C), B5 two parts | B5 assembles faster; pieces protected by blockers |
-| **Left-Facing / Chair-Sitting** | B1 | None (quiet turns allowed) | Vanilla commander card, themed and mostly harmless cards | — |
+| **Tax Collector** | B2–B5 | Small tax permanents; "Audit" spells that put a tax counter on a tax card | Bureaucratic Delay, Spectral Moat, his commander card | B2 minor taxes → B5 "one spell per turn" lock piece |
+| **Scholar** | B2–B5 | Cheap "homework" spells (loot, discard, small taxes on noncreature spells) | Clumsy Thief, Command Zone Recall; Scholar's printed upkeep trigger adds study counters, and at N counters his printed ability fires | Bigger/faster lessons; B5 free disruption |
+| **Mecha-Mowu** | B2–B3 | Cheap equipment and pump spells targeting him | Himself (cast/recast), with a printed upkeep trigger that grows him; Voltron attacks with commander damage | B3 equipment is bigger and grants evasion |
+| **Warlord** | B2–B4 | Token spells ("Muster the Pups: create two 1/1 soldiers") | Anthem enchantments, a big token wave, "must attack" swarms | More tokens per spell, earlier anthems |
+| **Alchemist** | B3–B4 | Toxic 1-drops, poison-swarm spells | Toxic creatures, "proliferate" spells (+1 to your poison if you have any) | Higher Toxic, earlier proliferate |
+| **Archmage** | B4–B5 | Cheap disruption spells or blockers | **Combo pieces**: B4 three parts (A/B/C), B5 two parts | B5 assembles faster; pieces protected by blockers |
+| **Left-Facing / Chair-Sitting** | B1 | None needed (quiet turns allowed) | Vanilla commander card, themed and mostly harmless cards | — |
 
 **Combo tracker (Archmage).** Pieces are permanents of different types (creature/artifact/enchantment) so the
 player has realistic answers. The battlefield shows "Combo: 2/3 assembled". If all pieces are on the battlefield
@@ -133,7 +133,7 @@ the turn log. Destroying any piece breaks it. Card names telegraph the plan ("Co
 Rough count to make playbooks work: about **25–35 new cards**, split into:
 
 - **Shared filler** (~8): cheap, low-impact plays any Mowu can make, so "something every turn" never runs dry.
-- **Per-archetype** (~3–5 each): commander card + upkeep/signature cards.
+- **Per-archetype** (~3–5 each): commander card, cheap every-turn cards and signature cards.
 - **Rework existing cards** (backlog): reword the "must attack/must block" reminder text, and make the Homing
   Fireball Pigeon / Wrath of Oops / Meat Pie numbers come from the tuning table.
 
@@ -169,7 +169,7 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
 
 - [x] **Batch 0: Quick win.** Neutral bracket stats on the victory screen.
 - [ ] **Batch 1: Engine foundation.** Mana value parser, `tuning.ts`, budget, `planOpponentTurn` with the
-  B2–B5 guarantee using existing cards plus shared filler (all real cards); turn-log UI. *Deliverable: Mowu never idles in B2+.*
+  B2–B5 guarantee (cast the cheapest card), multiple plays per turn, turn-log UI, "Countered" button. *Deliverable: Mowu never idles in B2+.*
 - [ ] **Batch 2: Command zone.** Commander state, tax, recast on destroy, left-panel display. Generalise Tax
   Collector Mowu; add commander cards for the other archetype Mowus.
 - [ ] **Batch 3: Playbooks, one archetype at a time.** Suggested order: Mecha (Voltron, simplest and most
@@ -197,5 +197,6 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
    Until then, the attack summary keeps showing attackers and total power and the player applies damage.
 7. **New archetypes** (Flying, Aggro, Chaos, group hug/forced draw, mill): all Phase 4.
 
-Also from this round: the victory screen shows plain stats without wording (done in Batch 0), and upkeep
-plays must be cards or effects on the commander/permanents (the ground rule above, ADR-019).
+Also from this round: the victory screen shows plain stats without wording (done in Batch 0), and every
+Mowu action must come from a cast card or printed text on a permanent (the ground rule above, ADR-019,
+clarified by the owner: it's about the *source*, not the effect).

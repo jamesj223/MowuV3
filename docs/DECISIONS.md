@@ -105,10 +105,13 @@
 - **Decision**: In Brackets 2–5 the opponent takes at least one main-phase action on every one of its turns; idle turns don't happen. An action can be small (cheap creature, counter on an existing permanent, minor tax, casting or buffing its commander); big effects (wipes, combo pieces, finishers) remain occasional and are gated by turn and bracket. Bracket 1 (Exhibition) may have quiet turns and leans into its theme. Custom keeps the user-set cadence; Solitaire has no opponent.
 - **Rationale**: Owner playtest feedback: an opponent that often does nothing doesn't feel like a real opponent, especially at higher brackets. Supersedes the "event every N turns" cadence for B2–B5 (ADR-007, `PHASE-2-PLAN.md`). The idle auto-skip (Phase 2) remains for B1, Custom and turns where the player wants to move quickly.
 
-## ADR-019: No Invisible Opponent Effects
-- **Date**: 2026-11-17
-- **Decision**: Everything Mowu does is either casting a card or changing a card already on the battlefield (including his commander, e.g. +1/+1 or "study" counters). There are no hidden timers or effects that exist only in the turn log. The every-turn fallback (ADR-018) follows the same rule.
-- **Rationale**: Owner feedback: non-removable, non-interactable effects would feel unfair. Keeping everything on cards means the player can always see it and answer it with the destroy button.
+## ADR-019: Every Opponent Action Has a Source the Player Can Answer
+- **Date**: 2026-11-17 (revised same day after owner clarification)
+- **Decision**: Every Mowu action comes from one of two sources:
+  1. **Casting a card** (the player could counter it; the opponent-turn screen has a "Countered" button), or
+  2. **Printed text on a permanent on the battlefield**: static effects ("Mowu's creatures get +1/+1", "spells cost {1} more") or triggered abilities ("At the beginning of your upkeep, put a +1/+1 counter on Mecha-Mowu"). The player answers these by removing the permanent.
+  Not allowed: effects with no card behind them (tokens or counters that "just appear" on Mowu's turn), eminence-style abilities that work from the command zone, and (by preference) activated abilities. Mowu changes existing permanents only by casting other cards (e.g. an equipment or aura) or via their printed text.
+- **Rationale**: Owner: the issue is the *source*, not the effect. A spell that makes two tokens can be countered; tokens appearing from nowhere cannot. Source-less effects feel unfair. Consequence: the every-turn guarantee (ADR-018) is "cast the cheapest card", and every card pool must contain cheap cards.
 
 ## ADR-020: Victory Screen Shows Bracket Stats Without a Verdict
 - **Date**: 2026-11-17
