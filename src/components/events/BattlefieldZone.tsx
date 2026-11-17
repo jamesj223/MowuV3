@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
+import { getEffectiveStats } from '@/logic/game';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 import { ShieldAlert, Trash2, History, Sparkles } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 interface BattlefieldZoneProps {
   onInspectCard: (card: ActivePermanent | ResolvedEvent) => void;
@@ -16,7 +18,16 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
     dismissPermanent,
     clearAllPermanents,
     triggerEvent,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      activePermanents: s.activePermanents,
+      eventHistory: s.eventHistory,
+      adjustPermanentCounters: s.adjustPermanentCounters,
+      dismissPermanent: s.dismissPermanent,
+      clearAllPermanents: s.clearAllPermanents,
+      triggerEvent: s.triggerEvent,
+    })),
+  );
 
   const [showHistory, setShowHistory] = useState(false);
 
@@ -81,12 +92,14 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
               className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Trigger Test Event (Ctrl+E)</span>
+              <span>Trigger Test Event (E)</span>
             </button>
           </div>
         ) : (
           <div className="flex flex-wrap gap-3.5 items-start justify-start pt-1">
-            {activePermanents.map((perm) => (
+            {activePermanents.map((perm) => {
+              const stats = getEffectiveStats(perm);
+              return (
               <div key={perm.instanceId} className="shrink-0">
                 <PlaytestCard
                   name={perm.name}
@@ -94,9 +107,10 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
                   artFile={perm.artFile}
                   renderedText={perm.renderedText}
                   flavorText={perm.flavorText}
-                  power={perm.power}
-                  toughness={perm.toughness}
+                  power={stats.power}
+                  toughness={stats.toughness}
                   counters={perm.counters}
+                  counterType={perm.counterType}
                   variant="in_play"
                   showDismiss={true}
                   onDismiss={() => dismissPermanent(perm.instanceId)}
@@ -108,7 +122,8 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
                   }}
                 />
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

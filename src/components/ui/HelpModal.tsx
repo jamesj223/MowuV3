@@ -10,17 +10,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const hotkeys = [
-    { action: 'Next Turn', keys: ['Space', 'Enter'] },
+    { action: 'Next Turn / Continue', keys: ['Space', 'Enter'] },
     { action: 'Deal Damage (-1 Life)', keys: ['Down', 'S', '-'] },
     { action: 'Deal Damage (-5 Life)', keys: ['Shift + Down', 'Shift + S'] },
-    { action: 'Deal Damage (-10 Life)', keys: ['Ctrl + Down', 'Ctrl + S'] },
+    { action: 'Deal Damage (-10 Life)', keys: ['Alt + Down', 'Alt + S'] },
     { action: 'Heal / Rollback (+1 Life)', keys: ['Up', 'W', '+'] },
     { action: 'Heal / Rollback (+5 Life)', keys: ['Shift + Up', 'Shift + W'] },
-    { action: 'Heal / Rollback (+10 Life)', keys: ['Ctrl + Up', 'Ctrl + W'] },
-    { action: 'Trigger Random Event', keys: ['Ctrl + E'] },
-    { action: 'Quick Restart Game', keys: ['Ctrl + Q'] },
+    { action: 'Heal / Rollback (+10 Life)', keys: ['Alt + Up', 'Alt + W'] },
+    { action: 'Trigger Random Event', keys: ['E'] },
+    { action: 'Restart Game (asks first)', keys: ['Shift + R'] },
     { action: 'Open Analytics & Benchmarks', keys: ['B'] },
-    { action: 'Open Settings / New Game', keys: ['Esc'] },
+    { action: 'Close Dialog / Open New Game', keys: ['Esc'] },
     { action: 'Help Cheat-sheet', keys: ['?', '/'] },
   ];
 
@@ -87,20 +87,29 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <span>Commander Bracket System</span>
             </h3>
             <p className="text-xs text-neutral-400 leading-relaxed">
-              Mowu v3 scales event difficulty and turn cadence to match the official MTG Commander
-              Brackets:
+              Brackets follow Wizards of the Coast's Commander Brackets (October 2025 update). Each
+              bracket sets how many turns you should expect to play before anyone wins or loses. Mowu
+              uses that as your benchmark: win sooner than that and your deck is probably playing
+              above the bracket. The opponent casts events more often at higher brackets.
             </p>
             <ul className="text-xs text-neutral-400 mt-2 space-y-1 list-disc list-inside">
-              <li><strong className="text-emerald-400">Bracket 1 (Precon)</strong>: 10–13 turn goal, mild disruption.</li>
-              <li><strong className="text-sky-400">Bracket 2 (Casual)</strong>: 8–10 turn goal, balanced interaction.</li>
-              <li><strong className="text-amber-400">Bracket 3 (Optimized)</strong>: 5–7 turn goal, heavy threats & taxes.</li>
-              <li><strong className="text-rose-400">Bracket 4 (cEDH)</strong>: 3–5 turn goal, brutal stax & fast clocks.</li>
+              <li><strong className="text-emerald-400">Bracket 1: Exhibition</strong>: theme over power; at least 9 turns.</li>
+              <li><strong className="text-sky-400">Bracket 2: Core</strong>: unoptimized, low-pressure; at least 8 turns.</li>
+              <li><strong className="text-amber-400">Bracket 3: Upgraded</strong>: strong synergy, one-big-turn wins; at least 6 turns.</li>
+              <li><strong className="text-orange-400">Bracket 4: Optimized</strong>: lethal, consistent and fast; at least 4 turns.</li>
+              <li><strong className="text-rose-400">Bracket 5: cEDH</strong>: built for the cEDH metagame; any turn.</li>
             </ul>
 
             <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
               <strong className="text-amber-400 block mb-1">🐕 Opponent Turn System & Commanders</strong>
-              Each turn alternates between your turn and an Opponent turn. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
+              Each turn alternates between your turn and an Opponent turn. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
             </div>
+
+            <p className="text-xs text-neutral-400 mt-3">
+              <strong className="text-neutral-300">Rollback</strong> (+ / W / Up) undoes damage you dealt this turn.
+              Opponent life gain from event cards never reduces your damage stats.
+              Use the <strong className="text-neutral-300">flag</strong> button to concede and log a loss.
+            </p>
 
             <p className="text-xs text-neutral-500 mt-3">
               Custom MS Paint card artwork can be added directly to{' '}

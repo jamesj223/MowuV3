@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { HoldButton } from '@/components/ui/HoldButton';
 import { Heart, Biohazard, Crown } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 export const PlayerTracker: React.FC = () => {
   const {
@@ -16,7 +17,21 @@ export const PlayerTracker: React.FC = () => {
     trackPlayerCommanderDamage,
     toggleTrackPlayerPoison,
     toggleTrackPlayerCommanderDamage,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      playerLife: s.playerLife,
+      poisonCounters: s.poisonCounters,
+      commanderDamage: s.commanderDamage,
+      adjustPlayerLife: s.adjustPlayerLife,
+      adjustPoison: s.adjustPoison,
+      adjustCommanderDamage: s.adjustCommanderDamage,
+      trackPlayer: s.trackPlayer,
+      trackPlayerPoison: s.trackPlayerPoison,
+      trackPlayerCommanderDamage: s.trackPlayerCommanderDamage,
+      toggleTrackPlayerPoison: s.toggleTrackPlayerPoison,
+      toggleTrackPlayerCommanderDamage: s.toggleTrackPlayerCommanderDamage,
+    })),
+  );
 
   if (!trackPlayer) return null;
 

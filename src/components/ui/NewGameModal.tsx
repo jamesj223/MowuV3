@@ -5,6 +5,7 @@ import type { CommanderBracket } from '@/types/game';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import { MOWU_COMMANDERS } from '@/data/commanders';
 import { X, Play, Settings } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 
 interface NewGameModalProps {
   isOpen: boolean;
@@ -20,9 +21,21 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
     trackPlayer,
     currentDeckName,
     startNewGame,
-  } = useGameStore();
+  } = useGameStore(
+    useShallow((s) => ({
+      startingOpponentHealth: s.startingOpponentHealth,
+      startingPlayerLife: s.startingPlayerLife,
+      bracket: s.bracket,
+      customEventFrequency: s.customEventFrequency,
+      trackPlayer: s.trackPlayer,
+      currentDeckName: s.currentDeckName,
+      startNewGame: s.startNewGame,
+    })),
+  );
 
-  const { decks, addDeck } = useDeckStore();
+  const { decks, addDeck } = useDeckStore(
+    useShallow((s) => ({ decks: s.decks, addDeck: s.addDeck })),
+  );
 
   const [deckName, setDeckName] = useState(currentDeckName || '');
   const [oppHealth, setOppHealth] = useState(startingOpponentHealth);
@@ -59,7 +72,7 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
       onClick={onClose}
     >
       <div
-        className="relative flex flex-col w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden"
+        className="relative flex flex-col w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -113,8 +126,8 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
               </span>
             </label>
 
-            <div className="grid grid-cols-2 gap-2">
-              {(['b1', 'b2', 'b3', 'b4'] as CommanderBracket[]).map((b) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {(['b1', 'b2', 'b3', 'b4', 'b5'] as CommanderBracket[]).map((b) => {
                 const conf = COMMANDER_BRACKETS[b];
                 const isSelected = selectedBracket === b;
                 return (
@@ -122,21 +135,23 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
                     key={b}
                     type="button"
                     onClick={() => setSelectedBracket(b)}
-                    className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                    className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                       isSelected
                         ? 'bg-neutral-850 border-amber-400 shadow-md ring-1 ring-amber-400/50'
                         : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 text-neutral-400'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-neutral-300'}`}>
-                        {conf.tag}
-                      </span>
-                      <span className="text-[10px] font-mono text-neutral-500">
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-neutral-300'}`}>
+                          {conf.tag}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-neutral-500 block mb-1">
                         {conf.targetTurns}
                       </span>
                     </div>
-                    <span className="text-[10px] text-neutral-500 mt-1 line-clamp-2">
+                    <span className="text-[10px] text-neutral-500 line-clamp-2">
                       {conf.description}
                     </span>
                   </button>
@@ -169,6 +184,25 @@ export const NewGameModal: React.FC<NewGameModalProps> = ({ isOpen, onClose }) =
                 Custom Frequency
               </button>
             </div>
+
+            {/* Official expectations for the selected bracket */}
+            {COMMANDER_BRACKETS[selectedBracket].expectations.length > 0 && (
+              <div className="mt-2.5 p-3 rounded-xl bg-neutral-950/60 border border-neutral-800 text-[11px] text-neutral-400">
+                <p className="font-semibold text-neutral-300 mb-1">
+                  {COMMANDER_BRACKETS[selectedBracket].name}: players expect
+                </p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {COMMANDER_BRACKETS[selectedBracket].expectations.map((e) => (
+                    <li key={e}>{e}</li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-neutral-500">
+                  {COMMANDER_BRACKETS[selectedBracket].minTurns !== null
+                    ? `Expect to play at least ${COMMANDER_BRACKETS[selectedBracket].minTurns} turns before you win or lose.`
+                    : 'These games could end on any turn.'}
+                </p>
+              </div>
+            )}
 
             {selectedBracket === 'custom' && (
               <div className="mt-2.5 flex items-center gap-2 p-2.5 rounded-xl bg-neutral-950 border border-neutral-800">
