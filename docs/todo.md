@@ -61,10 +61,12 @@
 
 ## Backlog
 
+- Art: see `docs/ART-LIST.md` (`npm run placeholders -- --status` shows what's still blank).
+
 - Attack modal should show all attacking creatures? Make it more fleshed out. Have a UI for declaring whether an attacker is blocked, survives/dies etc. Have the Player status card and a version of the battlefield card. And have damage/cmdr/infect auto apply if not blocked.
-- Add more cards!
-- Rework some of the existing cards.
-- Reword or remove some of the reminder text. Particularly the must attack and must block.
+- [x] Add more cards! (Phase 3: 33 archetype cards, 5 generic, 2 tokens; more welcome)
+- [x] Rework some of the existing cards. (Phase 3 Batch 4: numbers in `CARD_TUNING`, clearer text)
+- [x] Reword or remove some of the reminder text. Particularly the must attack and must block. (Phase 3 Batch 4)
 - Setting to enable/disable specific commanders. So people don't have to play against Infect Mowu if they don't want.
 - Separate settings page from new game page?
 

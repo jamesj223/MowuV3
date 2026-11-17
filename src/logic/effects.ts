@@ -11,6 +11,7 @@ import type { ActivePermanent, CardEffect, EffectUndo, EventCardDefinition } fro
 export interface EffectState {
   permanents: ActivePermanent[];
   playerPoison: number;
+  playerLife: number;
 }
 
 export interface EffectContext {
@@ -35,6 +36,7 @@ export const emptyUndo = (): EffectUndo => ({
   removeInstanceIds: [],
   counterChanges: [],
   playerPoison: 0,
+  playerLife: 0,
   opponentLife: 0,
 });
 
@@ -94,6 +96,7 @@ export const createTokenPermanent = (
 export const applyEffects = (effects: CardEffect[], state: EffectState, ctx: EffectContext): EffectResult => {
   let permanents = state.permanents;
   let playerPoison = state.playerPoison;
+  let playerLife = state.playerLife;
   let opponentLife = 0;
   const log: string[] = [];
   const undo = emptyUndo();
@@ -148,6 +151,16 @@ export const applyEffects = (effects: CardEffect[], state: EffectState, ctx: Eff
         }
         break;
       }
+      case 'player-life': {
+        playerLife += effect.amount;
+        undo.playerLife += effect.amount;
+        log.push(
+          effect.amount < 0
+            ? `You lose ${-effect.amount} life (now ${playerLife}).`
+            : `You gain ${effect.amount} life (now ${playerLife}).`,
+        );
+        break;
+      }
       case 'opponent-life': {
         opponentLife += effect.amount;
         undo.opponentLife += effect.amount;
@@ -165,7 +178,7 @@ export const applyEffects = (effects: CardEffect[], state: EffectState, ctx: Eff
     }
   }
 
-  return { permanents, playerPoison, opponentLife, log, undo };
+  return { permanents, playerPoison, playerLife, opponentLife, log, undo };
 };
 
 /** Reverse an undo record (opponent life is handled by the store, which owns the life total). */
@@ -175,7 +188,11 @@ export const undoEffects = (undo: EffectUndo, state: EffectState): EffectState =
   for (const change of undo.counterChanges) {
     if (!removed.has(change.instanceId)) permanents = addCounters(permanents, change.instanceId, -change.amount);
   }
-  return { permanents, playerPoison: Math.max(0, state.playerPoison - undo.playerPoison) };
+  return {
+    permanents,
+    playerPoison: Math.max(0, state.playerPoison - undo.playerPoison),
+    playerLife: state.playerLife - undo.playerLife,
+  };
 };
 
 /**

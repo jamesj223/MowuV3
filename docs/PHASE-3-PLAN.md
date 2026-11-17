@@ -1,6 +1,6 @@
 # Mowu v3 — Phase 3 Plan: Mowu Plays Like an Opponent
 
-> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–3 done; Batch 4 next.
+> Status: **approved** (owner answers 2026-11-17, recorded at the end). Batches 0–4 done; Batch 5 (commander settings) next, then the tuning pass.
 
 ## Goals
 
@@ -175,7 +175,7 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
 - [x] **Batch 3: Playbooks, one archetype at a time.** Suggested order: Mecha (Voltron, simplest and most
   requested) → Warlord → Archmage (with combo tracker) → Tax Collector (escalation) → Alchemist → Scholar →
   B1 gimmicks.
-- [ ] **Batch 4: Card pool pass.** Remaining new cards, reminder-text rewording, placeholder script reads the
+- [x] **Batch 4: Card pool pass.** Remaining new cards, reminder-text rewording, placeholder script reads the
   card list, "most wanted art" list.
 - [ ] **Batch 5: Commander settings.** Enable/disable individual Mowus (backlog item); the New Game dialog
   already lists possible commanders, so they become toggles.
@@ -199,6 +199,18 @@ Each batch ends with lint, tests, build and a browser check, then updates ROADMA
   warning.
 - 33 archetype cards + 2 tokens, all with blank art canvases. Observed in playtests: Mecha-Mowu can reach
   ~14/12 by turn 6 at B3, and B4–B5 boards still fill with generic blockers. Both are tuning-pass items.
+
+## Batch 4 notes (as built)
+
+- Reminder text reworded: blockers say "Blocks your biggest attacker if able."; "must attack" removed (all of
+  Mowu's non-Defender creatures attack anyway); redundant P/T parentheticals and keyword reminders removed;
+  text consistently uses "Mowu" and "you".
+- All generic-card numbers live in `CARD_TUNING` (`src/data/tuning.ts`).
+- Generic Chump Blocker stops at B3, Hardy Shield Bearer at B4 (less board clutter at high brackets).
+- Five cheap generic cards: Belly Rub, Distracting Squeak, Muddy Paws (B3+), Fetch!, Bark Alarm (new
+  `player-life` effect, undone if countered).
+- Battlefield sorted by threat (combo pieces, then creatures by power × bodies, then the rest).
+- `docs/ART-LIST.md` plus `npm run placeholders -- --status` for the art backlog.
 
 ## Owner answers (2026-11-17)
 

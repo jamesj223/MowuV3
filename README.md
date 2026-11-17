@@ -40,6 +40,8 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
   it's tagged "Commander" so you know to track commander damage.
 - **Counters.** +1/+1 counters (e.g. Tax Collector Mowu) pump the creature. Swarm counters (Toxic Mosquito
   Swarm) set how many bodies attack.
+- **Threats first.** Mowu's battlefield is sorted by how urgently you'd want to remove things: combo pieces,
+  then creatures by total attack (including buffs and swarm size), then everything else.
 - **Stats.** The current game's life curve and damage per turn, per-deck benchmarks (wins/losses, fastest win,
   averages), and a match log with JSON export/import.
 - **Persistence.** Settings, the game in progress and match history are saved to `localStorage`, so a reload
@@ -96,7 +98,8 @@ npm run dev          # start the dev server
 npm test             # unit tests (Vitest)
 npm run lint         # oxlint
 npm run build        # type-check + production build
-npm run placeholders # create placeholder art for any card missing an image
+npm run placeholders # create a blank canvas for any card missing an image
+npm run placeholders -- --status  # which art files are still blank (see docs/ART-LIST.md)
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, tests and build on every push to `master` and on every pull request.

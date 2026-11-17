@@ -43,6 +43,8 @@ export type CardEffect =
   | { type: 'create-tokens'; tokenId: string; count: number }
   /** Give the player poison counters (optionally only if they already have some: "proliferate"). */
   | { type: 'player-poison'; amount: number; onlyIfPoisoned?: boolean }
+  /** The player loses (negative) or gains life, if their life is being tracked. */
+  | { type: 'player-life'; amount: number }
   /** Mowu (the opponent pod) gains life. */
   | { type: 'opponent-life'; amount: number }
   /** If the source has at least `threshold` counters, remove that many and tell the player `text`. */
@@ -130,5 +132,6 @@ export interface EffectUndo {
   removeInstanceIds: string[];
   counterChanges: { instanceId: string; amount: number }[];
   playerPoison: number;
+  playerLife: number;
   opponentLife: number;
 }

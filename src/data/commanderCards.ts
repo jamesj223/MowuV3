@@ -129,7 +129,7 @@ export const COMMANDER_CARDS: EventCardDefinition[] = [
     toughness: 2,
     flavorText: 'Tail wagging optional. Safety goggles also, apparently, optional.',
     rulesText:
-      'Toxic 1. (Players dealt combat damage by this creature also get a poison counter.)\nOther creatures Mowu controls have Toxic 1.',
+      'Toxic 1.\nOther creatures Mowu controls have Toxic 1.',
     buff: { target: 'creatures', power: 0, toughness: 0, keywords: ['Toxic 1'] },
   }),
   commanderCard({

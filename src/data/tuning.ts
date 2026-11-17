@@ -77,3 +77,32 @@ export const bracketMultiplier = (bracket: CommanderBracket): number => {
     default: return 1.0;
   }
 };
+
+/** A value per bracket. Custom plays like Core (B2); Solitaire never casts. */
+export const perBracket = <T,>(b1: T, b2: T, b3: T, b4: T, b5: T): Record<CommanderBracket, T> => ({
+  b1, b2, b3, b4, b5, custom: b2, off: b2,
+});
+
+/** Numbers printed on the generic cards (src/data/cards.ts). */
+export const CARD_TUNING = {
+  /** Homing Fireball Pigeon: damage = max(min, round(turn × bracketMultiplier + 1)). */
+  pigeonMinDamage: 2,
+  /** Gargantuan Wall of Beef: toughness = max(min, round(turn × bracketMultiplier + 2)). */
+  wallOfBeefMinToughness: 4,
+  /** Wrath of Oops: hits everything from this turn on (or always at these brackets)… */
+  wrathFullFromTurn: 6,
+  wrathAlwaysFull: perBracket(false, false, false, true, true),
+  /** …otherwise destroys creatures with mana value up to this. */
+  wrathMaxManaValue: perBracket(3, 4, 5, 5, 5),
+  bureaucraticDelayTax: perBracket(1, 1, 1, 2, 3),
+  meatPieHeal: perBracket(4, 6, 8, 10, 14),
+  /** Toxic Mosquito Swarm size (bigger from turn 6). */
+  mosquitoSwarm: perBracket(1, 1, 1, 2, 3),
+  mosquitoSwarmLate: perBracket(2, 2, 2, 2, 3),
+  mosquitoLateFromTurn: 6,
+  /** Apex Behemoth: P/T = max(min, turn + bonus). */
+  apexMinStat: 5,
+  apexBonus: perBracket(1, 1, 2, 4, 6),
+  bellyRubLife: perBracket(2, 3, 3, 4, 5),
+  barkAlarmDamage: perBracket(2, 2, 3, 3, 4),
+};

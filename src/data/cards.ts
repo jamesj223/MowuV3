@@ -1,5 +1,5 @@
 import type { EventCardDefinition } from '@/types/card';
-import { bracketMultiplier } from '@/data/tuning';
+import { CARD_TUNING as T, bracketMultiplier } from '@/data/tuning';
 import { ARCHETYPE_CARDS } from '@/data/archetypeCards';
 
 /** Cards any Mowu can cast. */
@@ -14,12 +14,11 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: false,
     minTurn: 2,
     flavorText: 'It flies with burning precision straight toward your biggest threat.',
-    templateText: 'Deals {X} damage to your creature with the highest power.',
+    templateText: 'Homing Fireball Pigeon deals {X} damage to your creature with the highest power.',
     computeStats: (turn, bracket) => {
-      const mult = bracketMultiplier(bracket);
-      const x = Math.max(2, Math.round(turn * mult + 1));
+      const x = Math.max(T.pigeonMinDamage, Math.round(turn * bracketMultiplier(bracket) + 1));
       return {
-        renderedText: `Deals ${x} damage to your creature with the highest power.`,
+        renderedText: `Homing Fireball Pigeon deals ${x} damage to your creature with the highest power.`,
       };
     },
   },
@@ -31,13 +30,14 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     artFile: 'chump-blocker.png',
     category: 'creature',
     isPermanent: true,
+    maxBracket: 3, // too plain to show up at Optimized/cEDH
     minTurn: 1,
     basePower: 1,
     baseToughness: 1,
     flavorText: '"I volunteered for guard duty, but nobody mentioned giant dragons."',
-    templateText: 'Defender.\nMust block your highest power attacker if able.',
+    templateText: 'Defender.\nBlocks your biggest attacker if able.',
     computeStats: () => ({
-      renderedText: 'Defender.\nMust block your highest power attacker if able.',
+      renderedText: 'Defender.\nBlocks your biggest attacker if able.',
       power: 1,
       toughness: 1,
     }),
@@ -50,13 +50,14 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     artFile: 'chump-blocker.png',
     category: 'creature',
     isPermanent: true,
+    maxBracket: 4,
     minTurn: 2,
     basePower: 0,
     baseToughness: 5,
     flavorText: '"Hold the line! He can barely scratch this granite shield."',
-    templateText: 'Defender, Reach.\nMust block your highest power attacker if able.',
+    templateText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Reach.\nMust block your highest power attacker if able.',
+      renderedText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
       power: 0,
       toughness: 5,
     }),
@@ -73,9 +74,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 2,
     flavorText: 'It hops in the way of your attacks, strikes first, and slips away.',
-    templateText: 'Defender, Reach, First Strike.\nMust block if able.',
+    templateText: 'Defender, Reach, First Strike.\nBlocks your biggest attacker if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Reach, First Strike.\nMust block if able.',
+      renderedText: 'Defender, Reach, First Strike.\nBlocks your biggest attacker if able.',
       power: 1,
       toughness: 2,
     }),
@@ -92,9 +93,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     flavorText: 'A tiny drop of venom is all it takes to bring down a colossus.',
-    templateText: 'Defender, Deathtouch.\nMust block your highest power attacker if able.',
+    templateText: 'Defender, Deathtouch.\nBlocks your biggest attacker if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Deathtouch.\nMust block your highest power attacker if able.',
+      renderedText: 'Defender, Deathtouch.\nBlocks your biggest attacker if able.',
       power: 1,
       toughness: 1,
     }),
@@ -111,9 +112,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     flavorText: 'Its toxic ichor leaves a lingering stain on anything it touches.',
-    templateText: 'Defender, Toxic 1.\nWhen this creature dies from blocking, you get 1 poison counter.',
+    templateText: 'Defender, Toxic 1.\nWhen Contaminated Blocker dies, you get a poison counter.',
     computeStats: () => ({
-      renderedText: 'Defender, Toxic 1.\nWhen this creature dies from blocking, you get 1 poison counter.',
+      renderedText: 'Defender, Toxic 1.\nWhen Contaminated Blocker dies, you get a poison counter.',
       power: 1,
       toughness: 1,
     }),
@@ -130,9 +131,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 2,
     flavorText: '"Wait, do I jump left or jump right? AAAAH!"',
-    templateText: 'Defender.\nWhen this creature dies, discard a random nonland card, then draw a card.',
+    templateText: 'Defender.\nWhen Indecisive Chump Blocker dies, you discard a nonland card at random, then draw a card.',
     computeStats: () => ({
-      renderedText: 'Defender.\nWhen this creature dies, discard a random nonland card, then draw a card.',
+      renderedText: 'Defender.\nWhen Indecisive Chump Blocker dies, you discard a nonland card at random, then draw a card.',
       power: 1,
       toughness: 2,
     }),
@@ -149,9 +150,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 2,
     flavorText: '"I have mastered seven ancient martial disciplines just to stand in this doorway."',
-    templateText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nMust block if able.',
+    templateText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nBlocks your biggest attacker if able.',
     computeStats: () => ({
-      renderedText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nMust block if able.',
+      renderedText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nBlocks your biggest attacker if able.',
       power: 1,
       toughness: 2,
     }),
@@ -166,12 +167,11 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: true,
     minTurn: 3,
     flavorText: 'A towering fortress of prime cuts.',
-    templateText: 'Defender, Reach.\nMust block if able.',
+    templateText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
     computeStats: (turn, bracket) => {
-      const mult = bracketMultiplier(bracket);
-      const toughness = Math.max(4, Math.round(turn * mult + 2));
+      const toughness = Math.max(T.wallOfBeefMinToughness, Math.round(turn * bracketMultiplier(bracket) + 2));
       return {
-        renderedText: `Defender, Reach.\nMust block if able. (Toughness: ${toughness})`,
+        renderedText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
         power: 0,
         toughness,
       };
@@ -189,10 +189,10 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     flavorText: '"Did I drop the sacred relic again?"',
     templateText: 'Destroy all creatures with mana value {X} or less.',
     computeStats: (turn, bracket) => {
-      if (bracket === 'b5' || bracket === 'b4' || turn >= 6) {
+      if (T.wrathAlwaysFull[bracket] || turn >= T.wrathFullFromTurn) {
         return { renderedText: 'Destroy all creatures. They cannot be regenerated.' };
       }
-      const mv = bracket === 'b3' ? 5 : bracket === 'b1' ? 3 : 4;
+      const mv = T.wrathMaxManaValue[bracket];
       return { renderedText: `Destroy all creatures with mana value ${mv} or less.` };
     },
   },
@@ -209,7 +209,7 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     flavorText: 'Please fill out form 27-B in triplicate before casting your spell.',
     templateText: 'Noncreature spells you cast cost {1} more for each tax counter on Bureaucratic Delay.',
     computeStats: (_turn, bracket) => {
-      const tax = bracket === 'b5' ? 3 : bracket === 'b4' ? 2 : 1;
+      const tax = T.bureaucraticDelayTax[bracket];
       return {
         renderedText: `Bureaucratic Delay enters with ${tax === 1 ? 'a tax counter' : `${tax} tax counters`}.\nNoncreature spells you cast cost {1} more for each tax counter on Bureaucratic Delay.`,
         counters: tax,
@@ -240,12 +240,12 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     category: 'lifegain',
     isPermanent: false,
     minTurn: 2,
-    flavorText: 'It smells questionable, but opponent devours it anyway.',
-    templateText: 'Opponent gains {X} life.',
+    flavorText: 'It smells questionable. Mowu devours it anyway.',
+    templateText: 'Mowu gains {X} life.',
     computeStats: (_turn, bracket) => {
-      const heal = bracket === 'b5' ? 14 : bracket === 'b4' ? 10 : bracket === 'b3' ? 8 : bracket === 'b1' ? 4 : 6;
+      const heal = T.meatPieHeal[bracket];
       return {
-        renderedText: `Opponent devours the pie and gains +${heal} life!`,
+        renderedText: `Mowu gains ${heal} life.`,
         healAmount: heal,
       };
     },
@@ -260,9 +260,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: false,
     minTurn: 3,
     flavorText: 'He knocked over the vase, but still snatched a card from your hand.',
-    templateText: 'Discard a nonland card at random, then draw a card.',
+    templateText: 'You discard a nonland card at random, then draw a card.',
     computeStats: () => ({
-      renderedText: 'Discard a nonland card at random, then draw a card.',
+      renderedText: 'You discard a nonland card at random, then draw a card.',
     }),
   },
   {
@@ -279,11 +279,11 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     initialCounters: 1,
     counterType: 'swarm',
     flavorText: 'Buzzing with concentrated infect.',
-    templateText: 'Haste, Flying, Toxic 1.\nMust attack each combat if able.',
+    templateText: 'Haste, Flying, Toxic 1.',
     computeStats: (turn, bracket) => {
-      const count = bracket === 'b5' ? 3 : bracket === 'b4' || turn >= 6 ? 2 : 1;
+      const count = turn >= T.mosquitoLateFromTurn ? T.mosquitoSwarmLate[bracket] : T.mosquitoSwarm[bracket];
       return {
-        renderedText: 'Haste, Flying, Toxic 1 (Player takes 1 poison counter if unblocked).\nMust attack each combat if able. Counters show the swarm size; each mosquito attacks separately.',
+        renderedText: 'Haste, Flying, Toxic 1.',
         power: 1,
         toughness: 1,
         counters: count,
@@ -300,9 +300,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: false,
     minTurn: 4,
     flavorText: 'Back to the command tent for a tactical debrief.',
-    templateText: 'Return your Commander to the command zone. (Commander tax applies on recasting).',
+    templateText: 'Return your commander to the command zone.',
     computeStats: () => ({
-      renderedText: 'Return your Commander to the command zone. (Commander tax applies as usual).',
+      renderedText: 'Return your commander to the command zone.',
     }),
   },
   {
@@ -330,12 +330,11 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: true,
     minTurn: 5,
     flavorText: 'Too huge to ignore.',
-    templateText: 'Haste, Trample, Vigilance. Must attack each combat if able.',
+    templateText: 'Haste, Trample, Vigilance.',
     computeStats: (turn, bracket) => {
-      const bonus = bracket === 'b5' ? 6 : bracket === 'b4' ? 4 : bracket === 'b3' ? 2 : 1;
-      const stat = Math.max(5, turn + bonus);
+      const stat = Math.max(T.apexMinStat, turn + T.apexBonus[bracket]);
       return {
-        renderedText: `Haste, Trample, Vigilance.\nAttacks each combat if able. (${stat}/${stat})`,
+        renderedText: 'Haste, Trample, Vigilance.',
         power: stat,
         toughness: stat,
       };
@@ -351,10 +350,85 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: true,
     minTurn: 4,
     flavorText: 'The ghosts will accept either toll money or your tears.',
-    templateText: 'Creatures you control must pay {2} each to attack.',
+    templateText: "Creatures you control can't attack unless you pay {2} for each of them.",
     computeStats: () => ({
-      renderedText: 'For each creature you attack with, pay {2} or that creature cannot attack.',
+      renderedText: "Creatures you control can't attack unless you pay {2} for each of them.",
     }),
+  },
+  // ─── Cheap generic filler (Phase 3 Batch 4): variety that isn't another blocker ───
+  {
+    id: 'belly-rub',
+    name: 'Belly Rub',
+    manaCost: '{W}',
+    typeLine: 'Sorcery',
+    artFile: 'belly-rub.png',
+    category: 'lifegain',
+    isPermanent: false,
+    flavorText: 'Restores 3 hit points and 100% of morale.',
+    templateText: 'Mowu gains {X} life.',
+    computeStats: (_turn, bracket) => {
+      const life = T.bellyRubLife[bracket];
+      return { renderedText: `Mowu gains ${life} life.`, healAmount: life };
+    },
+  },
+  {
+    id: 'distracting-squeak',
+    name: 'Distracting Squeak',
+    manaCost: '{R}',
+    typeLine: 'Instant',
+    artFile: 'distracting-squeak.png',
+    category: 'disruption',
+    isPermanent: false,
+    minTurn: 2,
+    flavorText: 'Every creature in the room turns to look. Every single one.',
+    templateText: "Your creature with the highest power can't block this turn.",
+    computeStats: () => ({ renderedText: "Your creature with the highest power can't block this turn." }),
+  },
+  {
+    id: 'muddy-paws',
+    name: 'Muddy Paws',
+    manaCost: '{G}',
+    typeLine: 'Sorcery',
+    artFile: 'muddy-paws.png',
+    category: 'disruption',
+    isPermanent: false,
+    minBracket: 3,
+    minTurn: 3,
+    flavorText: 'Tracked straight across your mana base.',
+    templateText: "Tap a land you control. It doesn't untap during your next untap step.",
+    computeStats: () => ({ renderedText: "Tap a land you control. It doesn't untap during your next untap step." }),
+  },
+  {
+    id: 'fetch',
+    name: 'Fetch!',
+    manaCost: '{U}',
+    typeLine: 'Instant',
+    artFile: 'fetch.png',
+    category: 'removal',
+    isPermanent: false,
+    minTurn: 3,
+    flavorText: 'He brought it back. To you. Covered in slobber.',
+    templateText: 'Return your creature with the lowest mana value to your hand.',
+    computeStats: () => ({ renderedText: 'Return your creature with the lowest mana value to your hand.' }),
+  },
+  {
+    id: 'bark-alarm',
+    name: 'Bark Alarm',
+    manaCost: '{1}{R}',
+    typeLine: 'Sorcery',
+    artFile: 'bark-alarm.png',
+    category: 'removal',
+    isPermanent: false,
+    minTurn: 2,
+    flavorText: 'Mailman detected. Mailman detected. MAILMAN DETECTED.',
+    templateText: 'Bark Alarm deals {X} damage to you.',
+    computeStats: (_turn, bracket) => {
+      const dmg = T.barkAlarmDamage[bracket];
+      return {
+        renderedText: `Bark Alarm deals ${dmg} damage to you.`,
+        effects: [{ type: 'player-life', amount: -dmg }],
+      };
+    },
   },
 ];
 

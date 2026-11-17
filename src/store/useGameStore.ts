@@ -280,7 +280,7 @@ export const useGameStore = create<GameStoreState>()(
         const state = get();
         const result = applyEffects(
           effects,
-          { permanents: state.activePermanents, playerPoison: state.poisonCounters },
+          { permanents: state.activePermanents, playerPoison: state.poisonCounters, playerLife: state.playerLife },
           {
             sourceInstanceId,
             turn: state.turn,
@@ -292,6 +292,7 @@ export const useGameStore = create<GameStoreState>()(
         set({
           activePermanents: result.permanents,
           poisonCounters: result.playerPoison,
+          playerLife: result.playerLife,
           // Make sure the player can see poison Mowu gives them
           trackPlayerPoison: state.trackPlayerPoison || result.playerPoison > state.poisonCounters,
         });
@@ -472,8 +473,9 @@ export const useGameStore = create<GameStoreState>()(
           const reverted = undoEffects(undo, {
             permanents: get().activePermanents,
             playerPoison: get().poisonCounters,
+            playerLife: get().playerLife,
           });
-          set({ poisonCounters: reverted.playerPoison });
+          set({ poisonCounters: reverted.playerPoison, playerLife: reverted.playerLife });
           if (undo.opponentLife) get().applyOpponentHealthChange(-undo.opponentLife, 'card');
 
           if ('counters' in card) {

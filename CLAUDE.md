@@ -23,6 +23,7 @@ permanent: never effects that appear from nowhere (ADR-019). See ADR-018 and `do
 - `docs/todo.md`: the owner's backlog and feedback. Read this before proposing features.
 - `docs/ROADMAP.md`: current handoff status and open questions. Update it when you finish a chunk of work.
 - `docs/DECISIONS.md`: ADRs. Add one for any behaviour or design decision others would otherwise re-litigate.
+- `docs/ART-LIST.md`: prioritised list of card art still to draw.
 - `docs/PHASE-3-PLAN.md`: the current phase plan (opponent engine, commander zone, archetype playbooks).
 - `docs/PHASE-2-PLAN.md`, `docs/archive/`: past plans, kept for history.
 - Code: `src/logic/game.ts` (pure rules, unit-tested), `src/store/` (Zustand), `src/data/` (cards and

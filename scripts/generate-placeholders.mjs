@@ -121,12 +121,28 @@ for (const file of fs.readdirSync(dataDir).filter((f) => f.endsWith('.ts'))) {
   }
 }
 
-for (const card of cardFiles) {
-  const filePath = path.join(cardsDir, card.name);
-  if (!fs.existsSync(filePath)) {
-    const [r, g, b] = card.palette;
-    const png = createPng(320, 220, r, g, b);
-    fs.writeFileSync(filePath, png);
-    console.log(`Created template MS Paint canvas: ${card.name}`);
+const blank = (card) => createPng(320, 220, ...card.palette);
+
+if (process.argv.includes('--status')) {
+  // Report which art files are still the untouched blank canvas
+  const drawn = [];
+  const blanks = [];
+  const missing = [];
+  for (const card of cardFiles) {
+    const filePath = path.join(cardsDir, card.name);
+    if (!fs.existsSync(filePath)) missing.push(card.name);
+    else if (fs.readFileSync(filePath).equals(blank(card))) blanks.push(card.name);
+    else drawn.push(card.name);
+  }
+  console.log(`Card art: ${drawn.length} drawn, ${blanks.length} blank, ${missing.length} missing (of ${cardFiles.length}).`);
+  if (blanks.length) console.log(`\nStill blank (see docs/ART-LIST.md for priority):\n  ${blanks.join('\n  ')}`);
+  if (missing.length) console.log(`\nMissing (run npm run placeholders):\n  ${missing.join('\n  ')}`);
+} else {
+  for (const card of cardFiles) {
+    const filePath = path.join(cardsDir, card.name);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, blank(card));
+      console.log(`Created template MS Paint canvas: ${card.name}`);
+    }
   }
 }
