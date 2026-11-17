@@ -3,6 +3,7 @@ import { useGameStore } from '@/store/useGameStore';
 import { useDeckStore } from '@/store/useDeckStore';
 import { COMMANDER_BRACKETS } from '@/types/game';
 import { buildMatchRecord } from '@/logic/game';
+import { COMBO_LOSS_TEXTS, pickStable } from '@/data/flavour';
 import { Trophy, RotateCcw, Play, CheckCircle2, Biohazard, Crown, Skull } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -13,10 +14,11 @@ interface GameOverModalProps {
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame, onRestart }) => {
-  const { turn, totalDamageDealt, bracket, winReason, lossReason, eventsTriggered } = useGameStore(
+  const { turn, totalDamageDealt, bracket, winReason, lossReason, gameStartTime, eventsTriggered } = useGameStore(
     useShallow((s) => ({
       turn: s.turn,
       lossReason: s.lossReason,
+      gameStartTime: s.gameStartTime,
       totalDamageDealt: s.totalDamageDealt,
       bracket: s.bracket,
       winReason: s.winReason,
@@ -39,9 +41,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
   };
 
   const isLoss = Boolean(lossReason);
+  const comboText = pickStable(COMBO_LOSS_TEXTS, gameStartTime);
 
   const getVictoryTitle = () => {
-    if (lossReason === 'combo') return "Mowu's Combo Resolved";
+    if (lossReason === 'combo') return comboText.title;
     if (winReason === 'poison') return 'Infect Victory!';
     if (winReason === 'commander_damage') return 'Voltron Victory!';
     return 'Defenses Crushed!';
@@ -51,7 +54,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, onNewGame,
 
   const getVictorySubtitle = () => {
     if (lossReason === 'combo') {
-      return `Every combo piece was on the battlefield at the start of Mowu's turn ${turn}.`;
+      return comboText.subtitle.replace('{turn}', String(turn));
     }
     if (winReason === 'poison') {
       return `All 3 opponents eliminated with 10 poison counters in ${turnsText}!`;

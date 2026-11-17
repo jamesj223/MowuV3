@@ -9,6 +9,7 @@ import {
   getBuffsFor,
   getComboStatus,
   getEffectiveStats,
+  sortByThreat,
   getEligibleCards,
   getEventFrequency,
   hasKeyword,
@@ -20,6 +21,7 @@ import {
 import { EVENT_CARDS } from '@/data/cards';
 import { COMMANDER_CARDS, getCommanderCard } from '@/data/commanderCards';
 import { MOWU_COMMANDERS } from '@/data/commanders';
+import { COMBO_LOSS_TEXTS, pickStable } from '@/data/flavour';
 import { ARCHETYPE_CARDS, TOKEN_CARDS, TOKENS_BY_ID } from '@/data/archetypeCards';
 import { getManaValue } from './opponent';
 import type { ActivePermanent } from '@/types/card';
@@ -198,6 +200,29 @@ describe('static buffs (equipment, anthems)', () => {
     expect(attackers).toHaveLength(1);
     expect(attackers[0]).toMatchObject({ power: 2, count: 3, keywords: 'Haste' });
     expect(getAttackers([{ ...commander, turnPlayed: 1 }, boots], 4)[0].keywords).toBe('Haste, Trample');
+  });
+});
+
+describe('combo loss flavour', () => {
+  it('picks the same text for the same game, and every text names the turn', () => {
+    expect(pickStable(COMBO_LOSS_TEXTS, 1234567)).toBe(pickStable(COMBO_LOSS_TEXTS, 1234567));
+    expect(new Set(Array.from({ length: 50 }, (_, i) => pickStable(COMBO_LOSS_TEXTS, i))).size).toBe(COMBO_LOSS_TEXTS.length);
+    for (const t of COMBO_LOSS_TEXTS) expect(t.subtitle).toContain('{turn}');
+  });
+});
+
+describe('sortByThreat', () => {
+  it('puts combo pieces first, then creatures by total attack, then other permanents in cast order', () => {
+    const bear = perm({ instanceId: 'bear', power: 2, toughness: 2 });
+    const wall = perm({ instanceId: 'wall', power: 0, toughness: 10 });
+    const swarm = perm({ instanceId: 'swarm', power: 1, toughness: 1, counterType: 'swarm', counters: 3 });
+    const commander = perm({ instanceId: 'cmd', isCommander: true, power: 3, toughness: 3 });
+    const collar = perm({ instanceId: 'collar', power: undefined, toughness: undefined, buff: { target: 'commander', power: 3, toughness: 0 } });
+    const tax = perm({ instanceId: 'tax', power: undefined, toughness: undefined });
+    const piece = perm({ instanceId: 'piece', power: undefined, toughness: undefined, comboPiece: 'A' });
+    const order = sortByThreat([tax, bear, collar, wall, swarm, piece, commander]).map((p) => p.instanceId);
+    // Commander is 6 power with the collar; swarm is 3×1; bear 2; wall 0 (but tough)
+    expect(order).toEqual(['piece', 'cmd', 'swarm', 'bear', 'wall', 'tax', 'collar']);
   });
 });
 

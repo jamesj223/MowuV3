@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
-import { getBuffsFor, getComboStatus, getEffectiveStats } from '@/logic/game';
+import { getBuffsFor, getComboStatus, getEffectiveStats, sortByThreat } from '@/logic/game';
 import type { ActivePermanent, ResolvedEvent } from '@/types/card';
 import { ShieldAlert, Trash2, History, Sparkles, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
@@ -47,7 +47,7 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
               Opponent Battlefield
             </h2>
             <p className="text-[10px] text-neutral-500">
-              Active Permanents & Blockers ({activePermanents.length})
+              Active Permanents & Blockers ({activePermanents.length}) • biggest threats first
             </p>
           </div>
         </div>
@@ -127,7 +127,8 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
           </div>
         ) : (
           <div className="flex flex-wrap gap-3.5 items-start justify-start pt-2 pl-2">
-            {activePermanents.map((perm) => {
+            {/* Most urgent to remove first (see sortByThreat) */}
+            {sortByThreat(activePermanents).map((perm) => {
               const stats = getEffectiveStats(perm, activePermanents);
               const buffs = getBuffsFor(perm, activePermanents);
               const buffP = buffs.reduce((n, b) => n + b.power, 0);

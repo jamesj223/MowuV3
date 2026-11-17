@@ -139,6 +139,27 @@ export const getAttackers = (
     ];
   });
 
+/**
+ * Display order for Mowu's battlefield, most urgent to remove first:
+ * 1. combo pieces (Archmage: the game ends if they're all there),
+ * 2. creatures by total attack (power × bodies, with buffs), then toughness,
+ * 3. everything else (equipment, enchantments, artifacts) in cast order.
+ * Stable: ties keep their existing order.
+ */
+export const sortByThreat = (permanents: ActivePermanent[]): ActivePermanent[] => {
+  const rank = (p: ActivePermanent) => {
+    if (p.comboPiece) return { group: 0, attack: 0, toughness: 0 };
+    const { power, toughness } = getEffectiveStats(p, permanents);
+    if (power === undefined) return { group: 2, attack: 0, toughness: 0 };
+    const bodies = p.counterType === 'swarm' ? p.counters : 1;
+    return { group: 1, attack: Math.max(0, power) * bodies, toughness: (toughness ?? 0) * bodies };
+  };
+  return permanents
+    .map((p, index) => ({ p, index, ...rank(p) }))
+    .sort((a, b) => a.group - b.group || b.attack - a.attack || b.toughness - a.toughness || a.index - b.index)
+    .map(({ p }) => p);
+};
+
 export const totalAttackPower = (attackers: AttackingCreature[]): number =>
   attackers.reduce((sum, a) => sum + a.power * a.count, 0);
 
