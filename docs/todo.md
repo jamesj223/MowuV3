@@ -47,6 +47,11 @@
 
 ## Up Next
 
+- **Tap Mowu's attackers (bug, playtest 2026-11-18).** Attackers stay untapped, so they look able to block
+  on the player's turn. Fix: when Mowu's combat happens, attackers without Vigilance (printed or granted by
+  equipment/anthems) become tapped; they untap at the start of Mowu's next turn (his untap step). Show tapped
+  cards clearly (turned sideways or a "Tapped" badge). Pure logic in `src/logic/` with tests.
+
 - **Insurance cards for each Mowu's own weak spot (idea, owner, playtest 2026-11-18).** Fits ADR-024: covers
   Mowu's *own* known weaknesses, as a real deck builder would, rather than reading the player. Mostly static
   text the player respects when resolving their own spells (the app needn't detect anything). First ideas:
