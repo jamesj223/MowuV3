@@ -47,6 +47,16 @@
 
 ## Up Next
 
+- **Commander-targeting removal (Phase 3 tuning pass).** Almost all of Mowu's removal targets "your creature
+  with the highest power", which misses commander-centric value engines (e.g. Jodah: rarely the biggest
+  creature, but the thing a real table works through protection to kill). "Your commander" is always
+  identifiable, so add fake cards that go after it, scaled by bracket:
+  - targeted (destroy / exile / loses abilities): player's hexproof, protection, indestructible still apply;
+  - untargeted at B4–B5 (edict "sacrifice your commander", "your commander's abilities don't work while this
+    is on the battlefield"), like strong tables getting around protection;
+  - commander tax pressure (bounce / back to the command zone).
+  Weight toward control archetypes (Scholar, Archmage). Compare against the baseline playtest (Jodah, Nov 2026).
+
 - Phase 3 (`docs/PHASE-3-PLAN.md`): opponent turn engine, commander zone, archetype playbooks.
 
 ## Phase 4
