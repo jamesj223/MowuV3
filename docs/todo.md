@@ -47,6 +47,12 @@
 
 ## Up Next
 
+- **Auto-continue where waiting adds nothing (Phase 3 tuning pass).** The Phase 2 progress-bar auto-skip
+  (5s, hover pauses, Space skips) only fires on *idle* opponent turns, which Phase 3 made rare (Mowu acts
+  every turn from B2). Extend it to: the end-of-turn summary after a turn with **no combat** (the player has
+  already stepped through each cast). Never auto-continue: individual casts (the player may want
+  Countered), combat (blocks/damage), combo warnings or a loss.
+
 - **Smarter attacks (Phase 3 tuning pass).** Mowu attacks with every non-Defender creature, so engine
   creatures make suicidal attacks (playtest: Scholar Mowu's 1/4 swung into a 7/7, though his value is his
   upkeep study trigger, which doesn't need him to attack). Options: give Scholar Mowu Defender (simple, and
