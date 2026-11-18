@@ -47,6 +47,15 @@
 
 ## Up Next
 
+- **Smarter attacks (Phase 3 tuning pass).** Mowu attacks with every non-Defender creature, so engine
+  creatures make suicidal attacks (playtest: Scholar Mowu's 1/4 swung into a 7/7, though his value is his
+  upkeep study trigger, which doesn't need him to attack). Options: give Scholar Mowu Defender (simple, and
+  it signals he's an engine); or an attack rule where creatures with upkeep triggers or static buffs, or power
+  well below toughness, stay home unless the attack is "safe" (evasion, or Mowu's biggest creature).
+- **Combat screen copy.** "Assign blockers and take damage as needed" doesn't say *how*: today the player has
+  to end Mowu's turn first (the modal covers Player Status). Proper fix is Phase 4 combat resolution; until
+  then, at least reword the hint.
+
 - **Commander-targeting removal (Phase 3 tuning pass).** Almost all of Mowu's removal targets "your creature
   with the highest power", which misses commander-centric value engines (e.g. Jodah: rarely the biggest
   creature, but the thing a real table works through protection to kill). "Your commander" is always
