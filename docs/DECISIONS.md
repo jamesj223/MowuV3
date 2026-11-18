@@ -132,3 +132,8 @@
 - **Date**: 2026-11-17
 - **Decision**: The player can switch individual Mowu commanders off by clicking them in the New Game dialog. The list (`disabledCommanders`) is a persisted setting, applied to new games and restarts. If every Mowu for the chosen bracket is off, the game uses a generic opponent (no commander, generic cards only) rather than refusing to start or ignoring the setting; the dialog warns when that will happen.
 - **Rationale**: Owner backlog item (e.g. skipping Infect). Falling back to a generic opponent respects the player's choice and keeps every bracket playable.
+
+## ADR-024: Mowus Have Matchups, Not Perfect Answers
+- **Date**: 2026-11-18
+- **Decision**: Not every Mowu needs an answer to every player archetype, and none should feel like it always has the right answer. Each Mowu has strengths and blind spots (e.g. Tax Collector's noncreature taxes do little against an all-creature deck); that matchup variety is intended. Mowu never "reads" the player's deck or board: card choice stays driven by his own archetype, mana and the board facts he can see (his own permanents, the player's tracked counters). Tuning adds general-purpose interaction where it fits an archetype (e.g. commander-targeting removal for control Mowus), not tailored counters.
+- **Rationale**: Owner direction during the first playtest. Real Commander pods have good and bad matchups; an opponent that always has the answer feels unfair and implausible.
