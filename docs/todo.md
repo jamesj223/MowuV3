@@ -47,6 +47,16 @@
 
 ## Up Next
 
+- **Clear blocking rules (playtest 2026-11-18).** Several "Blocks your biggest attacker if able" blockers plus
+  evasion (e.g. one unblockable attacker that isn't the biggest) make it unclear who blocks what. Current
+  reading: "if able" skips attackers it can't legally block; several such blockers double-block your biggest
+  blockable attacker. Owner wants assignment to be straightforward. Options to decide later:
+  1. One documented blocking rule in Help (e.g. "blocks if able" creatures each take a different attacker,
+     biggest first; extras double up), with card text shortened to "Blocks if able."
+  2. App-assisted blocks in the Phase 4 combat screen: player enters attacker powers / ticks unblockable,
+     app assigns Mowu's blocks by the rule.
+  3. Fewer forced blockers: some become plain Defender or "can block an additional creature".
+
 - **Tap Mowu's attackers (bug, playtest 2026-11-18).** Attackers stay untapped, so they look able to block
   on the player's turn. Fix: when Mowu's combat happens, attackers without Vigilance (printed or granted by
   equipment/anthems) become tapped; they untap at the start of Mowu's next turn (his untap step). Show tapped
