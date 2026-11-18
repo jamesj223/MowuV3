@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { PlaytestCard } from '@/components/cards/PlaytestCard';
-import { totalAttackPower as sumAttackPower } from '@/logic/game';
+import { canAutoContinue, getComboStatus, totalAttackPower as sumAttackPower } from '@/logic/game';
+import { HoldButton } from '@/components/ui/HoldButton';
+import { DeltaBadge } from '@/components/ui/DeltaBadge';
 import { IDLE_AUTO_SKIP_MS, useIdleAutoSkip } from '@/hooks/useIdleAutoSkip';
-import { Swords, Sparkles, Coffee, ChevronRight, Skull } from 'lucide-react';
+import { Swords, Sparkles, Coffee, ChevronRight, Skull, Heart, Biohazard, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
 export const OpponentTurnModal: React.FC = () => {
@@ -15,6 +17,16 @@ export const OpponentTurnModal: React.FC = () => {
     endOpponentTurn,
     counterCurrentCard,
     currentDrawnCard,
+    activePermanents,
+    bracket,
+    playerLife,
+    poisonCounters,
+    commanderDamage,
+    adjustPlayerLife,
+    adjustPoison,
+    adjustCommanderDamage,
+    playerAccumulatedDelta,
+    isPlayerDeltaVisible,
   } = useGameStore(
     useShallow((s) => ({
       opponentTurnState: s.opponentTurnState,
@@ -24,22 +36,37 @@ export const OpponentTurnModal: React.FC = () => {
       endOpponentTurn: s.endOpponentTurn,
       counterCurrentCard: s.counterCurrentCard,
       currentDrawnCard: s.currentDrawnCard,
+      activePermanents: s.activePermanents,
+      bracket: s.bracket,
+      playerLife: s.playerLife,
+      poisonCounters: s.poisonCounters,
+      commanderDamage: s.commanderDamage,
+      adjustPlayerLife: s.adjustPlayerLife,
+      adjustPoison: s.adjustPoison,
+      adjustCommanderDamage: s.adjustCommanderDamage,
+      playerAccumulatedDelta: s.playerAccumulatedDelta,
+      isPlayerDeltaVisible: s.isPlayerDeltaVisible,
     })),
   );
 
   const [isPaused, setIsPaused] = useState(false);
-  const isIdle = opponentTurnState?.phase === 'idle';
+  const combo = getComboStatus(activePermanents, bracket);
+  const comboAlert = combo.oneAway || combo.assembled;
+  const autoContinue = opponentTurnState
+    ? canAutoContinue(opponentTurnState.phase, opponentTurnState.attackers.length, comboAlert)
+    : false;
 
-  // Auto-pass idle turns after 5s (never when Mowu casts a card or attacks).
+  // Auto-continue after 5s when there's nothing to do (idle turn, or no-combat turn summary).
   // Hooks must run before the early return below.
-  const remainingMs = useIdleAutoSkip(isIdle, isPaused, () => {
+  const remainingMs = useIdleAutoSkip(autoContinue, isPaused, () => {
     const s = useGameStore.getState();
-    if (s.opponentTurnState?.phase === 'idle') s.endOpponentTurn();
+    const t = s.opponentTurnState;
+    if (t && canAutoContinue(t.phase, t.attackers.length, comboAlert)) s.endOpponentTurn();
   });
   const timeLeft = remainingMs / 1000;
 
-  // The pointer can't "leave" a button that unmounted, so un-pause when the idle phase ends
-  if (!isIdle && isPaused) setIsPaused(false);
+  // The pointer can't "leave" a button that unmounted, so un-pause when the countdown stops
+  if (!autoContinue && isPaused) setIsPaused(false);
 
   if (!opponentTurnState) return null;
 
@@ -87,10 +114,10 @@ export const OpponentTurnModal: React.FC = () => {
       return moreCardsComing ? 'Next Card (Space / Enter)' : 'Continue (Space / Enter)';
     }
     if (phase === 'combat') return 'End Opponent Turn (Space / Enter)';
-    if (phase === 'idle') {
+    if (autoContinue) {
       return isPaused
         ? 'Paused — Continue to Your Turn (Space / Enter)'
-        : `Passing turn in ${Math.ceil(timeLeft)}s... (Space / Enter)`;
+        : `Your turn in ${Math.ceil(timeLeft)}s... (Space / Enter)`;
     }
     return 'Continue to Your Turn (Space / Enter)';
   };
@@ -267,9 +294,76 @@ export const OpponentTurnModal: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-neutral-500 text-center italic">
-                Assign blockers and take damage as needed, then end the opponent's turn.
-              </p>
+              {/* Your side of combat: apply what got through without leaving this screen */}
+              <div className="p-3 rounded-xl bg-neutral-950/60 border border-neutral-800 space-y-2">
+                <p className="text-[11px] text-neutral-400">
+                  Block with your creatures (Mowu's tapped creatures can't block; only his creatures with "Blocks if
+                  able" block). Then take the unblocked damage here. Hold a button for ±10.
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-300">
+                    <Heart className="w-3.5 h-3.5 text-emerald-400 fill-current" /> Your life
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <DeltaBadge delta={playerAccumulatedDelta} visible={isPlayerDeltaVisible} />
+                    <span className="text-lg font-black font-mono text-white min-w-8 text-right">{playerLife}</span>
+                    <HoldButton
+                      onClickStep={() => adjustPlayerLife(-1)}
+                      onHoldStep={() => adjustPlayerLife(-10)}
+                      className="w-7 h-7 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 font-mono font-bold text-sm border border-rose-800/50 flex items-center justify-center"
+                      title="Click: -1 • Hold: -10"
+                    >
+                      -
+                    </HoldButton>
+                    <HoldButton
+                      onClickStep={() => adjustPlayerLife(1)}
+                      onHoldStep={() => adjustPlayerLife(10)}
+                      className="w-7 h-7 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 font-mono font-bold text-sm border border-emerald-800/50 flex items-center justify-center"
+                      title="Click: +1 • Hold: +10"
+                    >
+                      +
+                    </HoldButton>
+                  </span>
+                </div>
+                {attackers.some((a) => /Toxic/.test(a.keywords)) && (
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-300">
+                      <Biohazard className="w-3.5 h-3.5 text-lime-400" /> Your poison (Toxic)
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-lg font-black font-mono text-lime-300 min-w-8 text-right">{poisonCounters}</span>
+                      <button type="button" onClick={() => adjustPoison(-1)} className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 font-mono font-bold text-sm">-</button>
+                      <button type="button" onClick={() => adjustPoison(1)} className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 font-mono font-bold text-sm text-lime-400">+</button>
+                    </span>
+                  </div>
+                )}
+                {attackers.some((a) => a.isCommander) && (
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-300">
+                      <Crown className="w-3.5 h-3.5 text-amber-400" /> Commander damage taken
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-lg font-black font-mono text-amber-300 min-w-8 text-right">{commanderDamage}</span>
+                      <HoldButton
+                        onClickStep={() => adjustCommanderDamage(-1)}
+                        onHoldStep={() => adjustCommanderDamage(-10)}
+                        className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 font-mono font-bold text-sm flex items-center justify-center"
+                        title="Click: -1 • Hold: -10"
+                      >
+                        -
+                      </HoldButton>
+                      <HoldButton
+                        onClickStep={() => adjustCommanderDamage(1)}
+                        onHoldStep={() => adjustCommanderDamage(10)}
+                        className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 font-mono font-bold text-sm text-amber-400 flex items-center justify-center"
+                        title="Click: +1 • Hold: +10"
+                      >
+                        +
+                      </HoldButton>
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -317,7 +411,7 @@ export const OpponentTurnModal: React.FC = () => {
             className={`btn-press relative overflow-hidden w-full py-3 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-white font-bold text-sm shadow-md border border-neutral-700 flex items-center justify-center gap-2 cursor-pointer transition-all`}
           >
             {/* Animated progress bar fill during idle countdown */}
-            {phase === 'idle' && (
+            {autoContinue && (
               <div
                 className="absolute left-0 top-0 bottom-0 bg-neutral-700/60 transition-[width] duration-100 ease-linear pointer-events-none"
                 style={{ width: `${((IDLE_AUTO_SKIP_MS - remainingMs) / IDLE_AUTO_SKIP_MS) * 100}%` }}

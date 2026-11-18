@@ -35,9 +35,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     flavorText: '"I volunteered for guard duty, but nobody mentioned giant dragons."',
-    templateText: 'Defender.\nBlocks your biggest attacker if able.',
+    templateText: 'Defender.\nBlocks if able.',
     computeStats: () => ({
-      renderedText: 'Defender.\nBlocks your biggest attacker if able.',
+      renderedText: 'Defender.\nBlocks if able.',
       power: 1,
       toughness: 1,
     }),
@@ -55,9 +55,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 0,
     baseToughness: 5,
     flavorText: '"Hold the line! He can barely scratch this granite shield."',
-    templateText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
+    templateText: 'Defender, Reach.\nBlocks if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
+      renderedText: 'Defender, Reach.\nBlocks if able.',
       power: 0,
       toughness: 5,
     }),
@@ -74,9 +74,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 2,
     flavorText: 'It hops in the way of your attacks, strikes first, and slips away.',
-    templateText: 'Defender, Reach, First Strike.\nBlocks your biggest attacker if able.',
+    templateText: 'Defender, Reach, First Strike.\nBlocks if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Reach, First Strike.\nBlocks your biggest attacker if able.',
+      renderedText: 'Defender, Reach, First Strike.\nBlocks if able.',
       power: 1,
       toughness: 2,
     }),
@@ -93,9 +93,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     flavorText: 'A tiny drop of venom is all it takes to bring down a colossus.',
-    templateText: 'Defender, Deathtouch.\nBlocks your biggest attacker if able.',
+    templateText: 'Defender, Deathtouch.\nBlocks if able.',
     computeStats: () => ({
-      renderedText: 'Defender, Deathtouch.\nBlocks your biggest attacker if able.',
+      renderedText: 'Defender, Deathtouch.\nBlocks if able.',
       power: 1,
       toughness: 1,
     }),
@@ -150,9 +150,9 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 2,
     flavorText: '"I have mastered seven ancient martial disciplines just to stand in this doorway."',
-    templateText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nBlocks your biggest attacker if able.',
+    templateText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nBlocks if able.',
     computeStats: () => ({
-      renderedText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nBlocks your biggest attacker if able.',
+      renderedText: 'Defender, First Strike, Deathtouch, Vigilance, Flanking, Horsemanship, Shadow, Trample, Reach.\nBlocks if able.',
       power: 1,
       toughness: 2,
     }),
@@ -167,11 +167,11 @@ export const GENERIC_CARDS: EventCardDefinition[] = [
     isPermanent: true,
     minTurn: 3,
     flavorText: 'A towering fortress of prime cuts.',
-    templateText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
+    templateText: 'Defender, Reach.\nBlocks if able.',
     computeStats: (turn, bracket) => {
       const toughness = Math.max(T.wallOfBeefMinToughness, Math.round(turn * bracketMultiplier(bracket) + 2));
       return {
-        renderedText: 'Defender, Reach.\nBlocks your biggest attacker if able.',
+        renderedText: 'Defender, Reach.\nBlocks if able.',
         power: 0,
         toughness,
       };

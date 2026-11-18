@@ -15,6 +15,8 @@ import {
   createSnapshot,
   getAttackers,
   getComboStatus,
+  tapAttackers,
+  untapAll,
   getEligibleCards,
   pickWeightedCard,
   rewindSnapshots,
@@ -59,6 +61,9 @@ interface GameStoreState {
   // Floating delta badge (display only; damage stats are recorded immediately)
   accumulatedDelta: number;
   isDeltaVisible: boolean;
+  /** Floating delta badge for the player's life (display only). */
+  playerAccumulatedDelta: number;
+  isPlayerDeltaVisible: boolean;
 
   // Live Turn State
   turn: number;
@@ -152,6 +157,8 @@ const createFreshGame = (
     totalDamageDealt: 0,
     accumulatedDelta: 0,
     isDeltaVisible: false,
+    playerAccumulatedDelta: 0,
+    isPlayerDeltaVisible: false,
     isGameOver: false,
     winReason: null,
     lossReason: null,
@@ -176,7 +183,13 @@ const createFreshGame = (
 const PERSISTED_KEYS = [
   ...(Object.keys(DEFAULT_SETTINGS) as (keyof SettingsState)[]),
   ...(Object.keys(createFreshGame(DEFAULT_SETTINGS)) as (keyof ReturnType<typeof createFreshGame>)[]),
-].filter((k) => k !== 'accumulatedDelta' && k !== 'isDeltaVisible');
+].filter(
+  (k) =>
+    k !== 'accumulatedDelta' &&
+    k !== 'isDeltaVisible' &&
+    k !== 'playerAccumulatedDelta' &&
+    k !== 'isPlayerDeltaVisible',
+);
 
 // The delta-badge timer is a side effect, not state: keep it out of the store.
 let deltaTimer: ReturnType<typeof setTimeout> | null = null;
@@ -184,6 +197,7 @@ const clearDeltaTimer = () => {
   if (deltaTimer) clearTimeout(deltaTimer);
   deltaTimer = null;
 };
+let playerDeltaTimer: ReturnType<typeof setTimeout> | null = null;
 
 const celebrate = () => confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
 
@@ -280,6 +294,17 @@ export const useGameStore = create<GameStoreState>()(
       const newInstanceId = () =>
         `inst-${Date.now()}-${(instanceSeq++).toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
 
+      /** Show the floating +/- badge on the player's life for a change of `diff`. */
+      const bumpPlayerDelta = (diff: number) => {
+        if (diff === 0) return;
+        if (playerDeltaTimer) clearTimeout(playerDeltaTimer);
+        playerDeltaTimer = setTimeout(() => {
+          playerDeltaTimer = null;
+          set({ playerAccumulatedDelta: 0, isPlayerDeltaVisible: false });
+        }, DELTA_DISPLAY_MS);
+        set((s) => ({ playerAccumulatedDelta: s.playerAccumulatedDelta + diff, isPlayerDeltaVisible: true }));
+      };
+
       /** Apply automatic card effects to the game (see src/logic/effects.ts). */
       const applyCardEffects = (effects: CardEffect[], sourceInstanceId?: string) => {
         const state = get();
@@ -302,6 +327,7 @@ export const useGameStore = create<GameStoreState>()(
           trackPlayerPoison: state.trackPlayerPoison || result.playerPoison > state.poisonCounters,
         });
         if (result.opponentLife !== 0) get().applyOpponentHealthChange(result.opponentLife, 'card');
+        bumpPlayerDelta(result.playerLife - state.playerLife);
         return { log: result.log, undo: result.undo };
       };
 
@@ -412,7 +438,8 @@ export const useGameStore = create<GameStoreState>()(
             return;
           }
 
-          set({ turnPhase: 'opponent' });
+          // Untap step, then upkeep
+          set({ turnPhase: 'opponent', activePermanents: untapAll(get().activePermanents) });
           const upkeepLog = runUpkeep();
           const oppTurn = { ...computeOpponentTurn(get()), upkeepLog };
 
@@ -458,7 +485,14 @@ export const useGameStore = create<GameStoreState>()(
           }
 
           if (phase === 'combat') {
-            set({ opponentTurnState: { ...state.opponentTurnState, phase: 'complete' } });
+            // Attackers without Vigilance stay tapped through the player's turn (can't block)
+            set({
+              activePermanents: tapAttackers(
+                state.activePermanents,
+                state.opponentTurnState.attackers.map((a) => a.instanceId),
+              ),
+              opponentTurnState: { ...state.opponentTurnState, phase: 'complete' },
+            });
             return;
           }
 
@@ -480,6 +514,7 @@ export const useGameStore = create<GameStoreState>()(
             playerPoison: get().poisonCounters,
             playerLife: get().playerLife,
           });
+          bumpPlayerDelta(reverted.playerLife - get().playerLife);
           set({ poisonCounters: reverted.playerPoison, playerLife: reverted.playerLife });
           if (undo.opponentLife) get().applyOpponentHealthChange(-undo.opponentLife, 'card');
 
@@ -520,11 +555,14 @@ export const useGameStore = create<GameStoreState>()(
 
         adjustPlayerLife: (amount) => {
           set((state) => ({ playerLife: state.playerLife + amount }));
+          bumpPlayerDelta(amount);
         },
 
         adjustPoison: (amount) => {
           set((state) => ({
             poisonCounters: Math.max(0, Math.min(POISON_LETHAL, state.poisonCounters + amount)),
+            // Adding poison (e.g. from the combat screen) makes sure it's visible
+            trackPlayerPoison: state.trackPlayerPoison || amount > 0,
           }));
         },
 
@@ -534,6 +572,7 @@ export const useGameStore = create<GameStoreState>()(
               0,
               Math.min(COMMANDER_DAMAGE_LETHAL, state.commanderDamage + amount),
             ),
+            trackPlayerCommanderDamage: state.trackPlayerCommanderDamage || amount > 0,
           }));
         },
 

@@ -102,7 +102,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
             <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
               <strong className="text-amber-400 block mb-1">🐕 Opponent Turn System & Commanders</strong>
-              Each turn alternates between your turn and an Opponent turn. Mowu has a mana budget that grows each turn (faster at higher brackets) and, outside Bracket 1, casts at least one card every turn. Press C (or Countered) if you counter a spell he casts. Each Mowu has a commander card: he casts it from the command zone when he can afford it, and if it's destroyed it returns there and costs {2} more next time. Each Mowu plays to his archetype with his own cards. Effects the app can apply (counters, tokens, your poison, Mowu's life) happen automatically and are shown in the turn log; the rest is on the card for you to resolve. Archmage Mowu's combo is tracked above the battlefield: if every piece is on his battlefield at the start of his turn, you lose. You can switch individual Mowus off in the New Game dialog. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
+              Each turn alternates between your turn and an Opponent turn. Mowu has a mana budget that grows each turn (faster at higher brackets) and, outside Bracket 1, casts at least one card every turn. Press C (or Countered) if you counter a spell he casts. Each Mowu has a commander card: he casts it from the command zone when he can afford it, and if it's destroyed it returns there and costs {2} more next time. Each Mowu plays to his archetype with his own cards. Effects the app can apply (counters, tokens, your poison, Mowu's life) happen automatically and are shown in the turn log; the rest is on the card for you to resolve. Archmage Mowu's combo is tracked above the battlefield: if every piece is on his battlefield at the start of his turn, you lose. You can switch individual Mowus off in the New Game dialog.</div>
+
+            <div className="mt-3 p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-400">
+              <strong className="text-sky-300 block mb-1">⚔️ Combat and blocking</strong>
+              Mowu attacks with his creatures that can (not Defender, not summoning sick). Attackers without
+              Vigilance stay <strong className="text-neutral-300">tapped</strong> through your turn, so they can't block.
+              <br />
+              <strong className="text-neutral-300">Blocking rule:</strong> only Mowu's untapped creatures with
+              "Blocks if able" block. Each blocks a different one of your attackers that it can legally block, your
+              biggest first; if he has more blockers than you have attackers, the extras double up on your biggest.
+              Nothing else of his blocks (his commander never does). Take damage on the combat screen. Creatures the opponent casts during their own turn can't attack until their next turn unless they have Haste. A Mowu variant commander matching your bracket is randomly assigned, biasing card appearances, declaring combat attacks with non-defender creatures, and providing archetype-specific flavour text.
             </div>
 
             <p className="text-xs text-neutral-400 mt-3">

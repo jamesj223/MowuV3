@@ -154,6 +154,7 @@ export const BattlefieldZone: React.FC<BattlefieldZoneProps> = ({ onInspectCard 
                   toughness={stats.toughness}
                   counters={perm.counters}
                   counterType={perm.counterType}
+                  tapped={perm.tapped}
                   variant="in_play"
                   showDismiss={true}
                   onDismiss={() => dismissPermanent(perm.instanceId)}

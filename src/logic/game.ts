@@ -160,6 +160,35 @@ export const sortByThreat = (permanents: ActivePermanent[]): ActivePermanent[] =
     .map(({ p }) => p);
 };
 
+/**
+ * After Mowu's combat: his attackers without Vigilance (printed or granted)
+ * become tapped, so they can't block on the player's turn.
+ */
+export const tapAttackers = (permanents: ActivePermanent[], attackerIds: string[]): ActivePermanent[] => {
+  const attacking = new Set(attackerIds);
+  return permanents.map((p) =>
+    attacking.has(p.instanceId) && !hasKeyword(getEffectiveKeywordText(p, permanents), 'Vigilance')
+      ? { ...p, tapped: true }
+      : p,
+  );
+};
+
+/** Mowu's untap step, at the start of his turn. */
+export const untapAll = (permanents: ActivePermanent[]): ActivePermanent[] =>
+  permanents.some((p) => p.tapped) ? permanents.map((p) => (p.tapped ? { ...p, tapped: false } : p)) : permanents;
+
+/**
+ * May Mowu's turn screen continue on its own (after a short, pausable countdown)?
+ * Only when there's nothing for the player to do: an idle turn, or the end-of-turn
+ * summary after a turn with no combat (each cast was already shown one by one).
+ * Never during casts (the player may counter), combat, or when a combo is close.
+ */
+export const canAutoContinue = (
+  phase: 'event' | 'combat' | 'idle' | 'complete',
+  attackerCount: number,
+  comboAlert: boolean,
+): boolean => !comboAlert && (phase === 'idle' || (phase === 'complete' && attackerCount === 0));
+
 export const totalAttackPower = (attackers: AttackingCreature[]): number =>
   attackers.reduce((sum, a) => sum + a.power * a.count, 0);
 

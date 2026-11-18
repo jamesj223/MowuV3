@@ -47,13 +47,15 @@
 
 ## Up Next
 
-- **Pup Soldiers can't block? (playtest 2026-11-18).** Leaning yes: removes most blocking ambiguity in Warlord
+- [x] Floating +/- numbers on the player's life total (friction batch).
+
+- [x] **Pup Soldiers can't block? (playtest 2026-11-18).** Done: Pup Soldiers and Toxic Spores can't block. Leaning yes: removes most blocking ambiguity in Warlord
   games (a stack of 7 pups with no blocking rule is hard to adjudicate), fits the aggro archetype and the flavour
   ("eager pups only charge"), like real go-wide tokens. Cost: Warlord must race (fine per ADR-024; pairs with
   insurance cards). Alternative: keep them able to block under whatever blocking rule is chosen (see "Clear
   blocking rules"). Same question may apply to Toxic Spores.
 
-- **Clear blocking rules (playtest 2026-11-18).** Several "Blocks your biggest attacker if able" blockers plus
+- [x] **Clear blocking rules (playtest 2026-11-18).** Option 1 done (rule in Help, "Blocks if able.", ADR-025); app-assisted blocks still Phase 4. Several "Blocks your biggest attacker if able" blockers plus
   evasion (e.g. one unblockable attacker that isn't the biggest) make it unclear who blocks what. Current
   reading: "if able" skips attackers it can't legally block; several such blockers double-block your biggest
   blockable attacker. Owner wants assignment to be straightforward. Options to decide later:
@@ -63,7 +65,7 @@
      app assigns Mowu's blocks by the rule.
   3. Fewer forced blockers: some become plain Defender or "can block an additional creature".
 
-- **Tap Mowu's attackers (bug, playtest 2026-11-18).** Attackers stay untapped, so they look able to block
+- [x] **Tap Mowu's attackers (bug, playtest 2026-11-18).** Done (friction batch). Attackers stay untapped, so they look able to block
   on the player's turn. Fix: when Mowu's combat happens, attackers without Vigilance (printed or granted by
   equipment/anthems) become tapped; they untap at the start of Mowu's next turn (his untap step). Show tapped
   cards clearly (turned sideways or a "Tapped" badge). Pure logic in `src/logic/` with tests.
@@ -78,18 +80,18 @@
   - Archmage (exposed combo pieces): Arcane Sentinel exists; maybe one more protective piece.
   - Alchemist (poison needs to connect): evasion for his Toxic creatures (Flying, "can't be blocked").
 
-- **Auto-continue where waiting adds nothing (Phase 3 tuning pass).** The Phase 2 progress-bar auto-skip
+- [x] **Auto-continue where waiting adds nothing (Phase 3 tuning pass).** Done (friction batch). The Phase 2 progress-bar auto-skip
   (5s, hover pauses, Space skips) only fires on *idle* opponent turns, which Phase 3 made rare (Mowu acts
   every turn from B2). Extend it to: the end-of-turn summary after a turn with **no combat** (the player has
   already stepped through each cast). Never auto-continue: individual casts (the player may want
   Countered), combat (blocks/damage), combo warnings or a loss.
 
-- **Smarter attacks (Phase 3 tuning pass).** Mowu attacks with every non-Defender creature, so engine
+- **Smarter attacks (Phase 3 tuning pass).** Partly done: Scholar, Archmage and Chair-Sitting Mowu now have Defender; a general attack rule is still open. Mowu attacks with every non-Defender creature, so engine
   creatures make suicidal attacks (playtest: Scholar Mowu's 1/4 swung into a 7/7, though his value is his
   upkeep study trigger, which doesn't need him to attack). Options: give Scholar Mowu Defender (simple, and
   it signals he's an engine); or an attack rule where creatures with upkeep triggers or static buffs, or power
   well below toughness, stay home unless the attack is "safe" (evasion, or Mowu's biggest creature).
-- **Combat screen copy.** "Assign blockers and take damage as needed" doesn't say *how*: today the player has
+- [x] **Combat screen copy.** Done: combat screen has life (and Toxic/commander) controls and explains blocking. "Assign blockers and take damage as needed" doesn't say *how*: today the player has
   to end Mowu's turn first (the modal covers Player Status). Proper fix is Phase 4 combat resolution; until
   then, at least reword the hint.
 

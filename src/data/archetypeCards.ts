@@ -41,7 +41,7 @@ export const TOKEN_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     flavorText: 'Sit. Stay. Charge!',
-    stats: () => ({ renderedText: '', power: 1, toughness: 1 }),
+    stats: () => ({ renderedText: "This creature can't block.", power: 1, toughness: 1 }),
   }),
   card({
     id: 'token-toxic-spore',
@@ -54,7 +54,7 @@ export const TOKEN_CARDS: EventCardDefinition[] = [
     basePower: 1,
     baseToughness: 1,
     flavorText: 'Do not sniff.',
-    stats: () => ({ renderedText: 'Toxic 1.', power: 1, toughness: 1 }),
+    stats: () => ({ renderedText: "Toxic 1.\nThis creature can't block.", power: 1, toughness: 1 }),
   }),
 ];
 
@@ -543,7 +543,7 @@ const archmageCards: EventCardDefinition[] = [
     baseToughness: 4,
     flavorText: 'Guards the combo. Also guards the snacks.',
     stats: () => ({
-      renderedText: "Defender.\nCombo pieces Mowu controls can't be destroyed while Arcane Sentinel is on the battlefield.",
+      renderedText: "Defender. Blocks if able.\nCombo pieces Mowu controls can't be destroyed while Arcane Sentinel is on the battlefield.",
       power: 0,
       toughness: 4,
     }),

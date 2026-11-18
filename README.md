@@ -44,6 +44,9 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
   it's tagged "Commander" so you know to track commander damage.
 - **Counters.** +1/+1 counters (e.g. Tax Collector Mowu) pump the creature. Swarm counters (Toxic Mosquito
   Swarm) set how many bodies attack.
+- **Combat.** Mowu's attackers without Vigilance stay tapped through your turn. Only his creatures with "Blocks
+  if able" block: each takes a different one of your attackers, biggest first, and extras double up. Take the
+  unblocked damage (and any poison or commander damage) right on the combat screen.
 - **Threats first.** Mowu's battlefield is sorted by how urgently you'd want to remove things: combo pieces,
   then creatures by total attack (including buffs and swarm size), then everything else.
 - **Stats.** The current game's life curve and damage per turn, per-deck benchmarks (wins/losses, fastest win,

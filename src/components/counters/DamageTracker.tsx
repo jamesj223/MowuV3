@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { HoldButton } from '@/components/ui/HoldButton';
+import { DeltaBadge } from '@/components/ui/DeltaBadge';
 import { Shield, Biohazard, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -104,19 +105,7 @@ export const DamageTracker: React.FC = () => {
             <span className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500">Life Total</span>
             <span className="text-2xl font-black font-mono text-white">{opponentHealth}</span>
           </div>
-          <div
-            className={`mb-1 rounded-full border px-1.5 py-0.5 font-mono text-[10px] font-bold shadow-md transition-all duration-300 ${
-              isDeltaVisible && accumulatedDelta !== 0
-                ? 'scale-100 opacity-100'
-                : 'scale-90 opacity-0'
-            } ${
-              accumulatedDelta < 0
-                ? 'border-rose-500/50 bg-rose-500/20 text-rose-400'
-                : 'border-emerald-500/50 bg-emerald-500/20 text-emerald-400'
-            }`}
-          >
-            {accumulatedDelta > 0 ? `+${accumulatedDelta}` : accumulatedDelta}
-          </div>
+          <DeltaBadge delta={accumulatedDelta} visible={isDeltaVisible} className="mb-1" />
         </div>
         <div className="flex items-center gap-1.5">
           <HoldButton

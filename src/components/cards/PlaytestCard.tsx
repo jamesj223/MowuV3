@@ -17,6 +17,7 @@ interface PlaytestCardProps {
   toughness?: number | string;
   counters?: number;
   counterType?: CounterType;
+  tapped?: boolean;
   variant?: 'in_play' | 'detailed';
   size?: 'sm' | 'md' | 'lg';
   onDismiss?: () => void;
@@ -37,6 +38,7 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
   toughness,
   counters = 0,
   counterType,
+  tapped = false,
   variant = 'in_play',
   size = 'sm',
   onDismiss,
@@ -72,11 +74,20 @@ export const PlaytestCard: React.FC<PlaytestCardProps> = ({
           event.stopPropagation();
           setContextMenuOpen(true);
         }}
-        className={`relative group rounded-xl bg-neutral-900 border border-neutral-700 hover:border-amber-400 text-neutral-900 shadow-lg select-none flex flex-col justify-between transition-all duration-150 w-38 sm:w-44 min-h-[220px] max-h-[260px] p-2 cursor-pointer hover:-translate-y-1 hover:shadow-2xl`}
+        className={`relative group rounded-xl bg-neutral-900 border border-neutral-700 hover:border-amber-400 text-neutral-900 shadow-lg select-none flex flex-col justify-between transition-all duration-150 w-38 sm:w-44 min-h-[220px] max-h-[260px] p-2 cursor-pointer hover:-translate-y-1 hover:shadow-2xl ${
+          tapped ? 'rotate-6 opacity-60 saturate-50' : ''
+        }`}
+        title={tapped ? "Tapped: attacked last turn, so it can't block until Mowu's next turn" : undefined}
         style={{
           background: 'linear-gradient(145deg, #1e222b 0%, #13161d 100%)',
         }}
       >
+        {tapped && (
+          <span className="absolute top-1/3 left-1/2 -translate-x-1/2 z-20 -rotate-6 rounded-md border border-sky-400/60 bg-neutral-950/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-sky-300 shadow-lg">
+            Tapped
+          </span>
+        )}
+
         {/* Playtest Card Inner Face */}
         <div className="flex flex-col flex-grow rounded-lg bg-[#faf8f2] border border-[#333] p-1.5 overflow-hidden shadow-inner">
           {/* Header: Name only (no mana clutter needed in play) */}

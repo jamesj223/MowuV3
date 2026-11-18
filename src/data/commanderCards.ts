@@ -3,7 +3,10 @@
  * the random card pool); recasting costs commander tax. Linked to a commander
  * by `signatureCommanderId`.
  *
- * B1 gimmick commanders are vanilla (stats, art and flavour only). Archetype
+ * B1 gimmick commanders are vanilla apart from keywords (stats, art and flavour).
+ * Engine commanders (Scholar, Archmage) and Chair-Sitting Mowu have Defender: their
+ * value is their text, so they stay home. No commander has "Blocks if able", so
+ * none of them block (see the blocking rule in the Help modal). Archetype
  * commanders carry their playbook's printed text, which must follow ADR-019:
  * static or triggered text only, no activated abilities, nothing that works
  * from the command zone.
@@ -55,6 +58,7 @@ export const COMMANDER_CARDS: EventCardDefinition[] = [
     power: 1,
     toughness: 4,
     flavorText: 'Undefeated in seven consecutive games of musical chairs, mostly by never getting up.',
+    rulesText: 'Defender.',
   }),
   commanderCard({
     id: 'tax-collector-mowu',
@@ -84,7 +88,7 @@ export const COMMANDER_CARDS: EventCardDefinition[] = [
     initialCounters: 0,
     flavorText: 'Has read every book in the library. Has chewed most of them.',
     rulesText:
-      "At the beginning of Mowu's upkeep, put a study counter on Scholar Mowu. Then if it has three or more, remove three and you discard a card at random.",
+      "Defender.\nAt the beginning of Mowu's upkeep, put a study counter on Scholar Mowu. Then if it has three or more, remove three and you discard a card at random.",
     upkeep: [
       { type: 'counters', target: 'self', amount: 1 },
       { type: 'threshold', threshold: 3, text: 'Lesson time! Scholar Mowu removes three study counters: you discard a card at random.' },
@@ -142,7 +146,7 @@ export const COMMANDER_CARDS: EventCardDefinition[] = [
     power: 2,
     toughness: 4,
     flavorText: 'Such combo. Much wow. Very infinite.',
-    rulesText: 'Flying.\nCombo pieces Mowu controls have hexproof. (You can\'t target them.)',
+    rulesText: 'Defender, Flying.\nCombo pieces Mowu controls have hexproof. (You can\'t target them.)',
   }),
 ];
 

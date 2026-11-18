@@ -10,6 +10,9 @@ import {
   getComboStatus,
   getEffectiveStats,
   sortByThreat,
+  canAutoContinue,
+  tapAttackers,
+  untapAll,
   getEligibleCards,
   getEventFrequency,
   hasKeyword,
@@ -211,6 +214,30 @@ describe('combo loss flavour', () => {
   });
 });
 
+describe('canAutoContinue', () => {
+  it('only when there is nothing for the player to do', () => {
+    expect(canAutoContinue('idle', 0, false)).toBe(true);
+    expect(canAutoContinue('complete', 0, false)).toBe(true); // casts already seen, no combat
+    expect(canAutoContinue('complete', 2, false)).toBe(false); // after combat: player is applying damage
+    expect(canAutoContinue('event', 0, false)).toBe(false); // player may counter
+    expect(canAutoContinue('combat', 2, false)).toBe(false);
+    expect(canAutoContinue('complete', 0, true)).toBe(false); // combo one away / assembled
+  });
+});
+
+describe('tapping', () => {
+  it("taps attackers without Vigilance (printed or granted), and Mowu's untap step untaps them", () => {
+    const pup = perm({ instanceId: 'pup' });
+    const knight = perm({ instanceId: 'knight', renderedText: 'Vigilance.' });
+    const cmd = perm({ instanceId: 'cmd', isCommander: true });
+    const plating = perm({ instanceId: 'plating', power: undefined, toughness: undefined, buff: { target: 'commander', power: 1, toughness: 3, keywords: ['Vigilance'] } });
+    const bystander = perm({ instanceId: 'home' });
+    const after = tapAttackers([pup, knight, cmd, plating, bystander], ['pup', 'knight', 'cmd']);
+    expect(after.filter((p) => p.tapped).map((p) => p.instanceId)).toEqual(['pup']);
+    expect(untapAll(after).some((p) => p.tapped)).toBe(false);
+  });
+});
+
 describe('sortByThreat', () => {
   it('puts combo pieces first, then creatures by total attack, then other permanents in cast order', () => {
     const bear = perm({ instanceId: 'bear', power: 2, toughness: 2 });
@@ -400,9 +427,24 @@ describe('commander cards', () => {
     }
   });
 
-  it('B1 gimmick commanders are vanilla (no rules text)', () => {
-    for (const id of ['left-facing', 'chair-sitting']) {
-      expect(getCommanderCard(id)!.computeStats(5, 'b1').renderedText).toBe('');
+  it('B1 gimmick commanders are vanilla apart from keywords', () => {
+    expect(getCommanderCard('left-facing')!.computeStats(5, 'b1').renderedText).toBe('');
+    expect(getCommanderCard('chair-sitting')!.computeStats(5, 'b1').renderedText).toBe('Defender.');
+  });
+
+  it('engine commanders stay home (Defender), and no commander is a forced blocker', () => {
+    for (const id of ['scholar', 'archmage', 'chair-sitting']) {
+      expect(getCommanderCard(id)!.computeStats(5, 'b4').renderedText, id).toMatch(/^Defender\b/);
+    }
+    for (const card of COMMANDER_CARDS) {
+      expect(card.computeStats(5, 'b4').renderedText, card.id).not.toMatch(/Blocks if able/);
+    }
+  });
+
+  it('swarm tokens never block; forced blockers say so plainly', () => {
+    for (const t of TOKEN_CARDS) expect(t.computeStats(5, 'b3').renderedText).toMatch(/can't block/);
+    for (const c of [...EVENT_CARDS]) {
+      expect(c.computeStats(5, 'b3').renderedText, c.id).not.toMatch(/biggest attacker/);
     }
   });
 

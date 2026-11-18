@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { HoldButton } from '@/components/ui/HoldButton';
+import { DeltaBadge } from '@/components/ui/DeltaBadge';
 import { Heart, Biohazard, Crown } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -17,6 +18,8 @@ export const PlayerTracker: React.FC = () => {
     trackPlayerCommanderDamage,
     toggleTrackPlayerPoison,
     toggleTrackPlayerCommanderDamage,
+    playerAccumulatedDelta,
+    isPlayerDeltaVisible,
   } = useGameStore(
     useShallow((s) => ({
       playerLife: s.playerLife,
@@ -30,6 +33,8 @@ export const PlayerTracker: React.FC = () => {
       trackPlayerCommanderDamage: s.trackPlayerCommanderDamage,
       toggleTrackPlayerPoison: s.toggleTrackPlayerPoison,
       toggleTrackPlayerCommanderDamage: s.toggleTrackPlayerCommanderDamage,
+      playerAccumulatedDelta: s.playerAccumulatedDelta,
+      isPlayerDeltaVisible: s.isPlayerDeltaVisible,
     })),
   );
 
@@ -85,6 +90,7 @@ export const PlayerTracker: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <DeltaBadge delta={playerAccumulatedDelta} visible={isPlayerDeltaVisible} />
           <span
             className={`text-2xl font-black font-mono ${
               playerLife <= 10 ? 'text-rose-400 animate-pulse' : 'text-white'

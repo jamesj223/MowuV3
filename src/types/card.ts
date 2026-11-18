@@ -114,6 +114,7 @@ export interface ActivePermanent {
   upkeep?: CardEffect[];
   buff?: StaticBuff;
   comboPiece?: ComboPiece;
+  tapped?: boolean;               // attacked without Vigilance; untaps at Mowu's next untap step
 }
 
 export interface ResolvedEvent {
