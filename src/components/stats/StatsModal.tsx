@@ -349,6 +349,8 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                           <p className="text-xs text-neutral-500 flex items-center gap-2 mt-0.5">
                             <span className="font-mono text-sky-400 font-semibold">{bracketTag}</span>
                             <span>•</span>
+                            <span>vs. {m.commanderName ?? (m.commanderId ? m.commanderId : 'generic opponent')}</span>
+                            <span>•</span>
                             <span>{new Date(m.timestamp).toLocaleDateString()}</span>
                           </p>
                         </div>
@@ -357,7 +359,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose }) => {
                           <div className="text-right">
                             {m.won ? (
                               <p className="text-sm font-mono font-bold text-emerald-400">
-                                Won in {m.turns} turns
+                                Won in {m.turns} turn{m.turns === 1 ? '' : 's'}
                               </p>
                             ) : (
                               <p className="text-sm font-mono font-bold text-rose-400">

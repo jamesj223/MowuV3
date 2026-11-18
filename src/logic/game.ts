@@ -314,6 +314,7 @@ export const buildMatchRecord = (
     bracket: CommanderBracket;
     winReason: WinReason | null;
     eventsTriggered: number;
+    opponentCommander?: { id: string; name: string } | null;
   },
   won: boolean,
   lossReason?: LossReason,
@@ -328,4 +329,6 @@ export const buildMatchRecord = (
   eventCount: game.eventsTriggered,
   won,
   lossReason: won ? undefined : (lossReason ?? 'conceded'),
+  commanderId: game.opponentCommander?.id,
+  commanderName: game.opponentCommander?.name,
 });

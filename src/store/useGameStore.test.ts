@@ -378,6 +378,14 @@ describe('parseMatch', () => {
     expect(parseMatch(null)).toBeNull();
   });
 
+  it('keeps the Mowu faced, and accepts older records without one', () => {
+    expect(parseMatch({ ...valid, commanderId: 'mecha', commanderName: 'Mecha-Mowu' })).toMatchObject({
+      commanderId: 'mecha',
+      commanderName: 'Mecha-Mowu',
+    });
+    expect(parseMatch(valid)?.commanderId).toBeUndefined();
+  });
+
   it('defaults older records without a won flag to wins', () => {
     const { won: _won, ...legacy } = valid;
     expect(parseMatch(legacy)?.won).toBe(true);

@@ -47,7 +47,7 @@ scaled to your [Commander Bracket](#brackets) and attacks you with its creatures
 - **Threats first.** Mowu's battlefield is sorted by how urgently you'd want to remove things: combo pieces,
   then creatures by total attack (including buffs and swarm size), then everything else.
 - **Stats.** The current game's life curve and damage per turn, per-deck benchmarks (wins/losses, fastest win,
-  averages), and a match log with JSON export/import.
+  averages), and a match log (deck, bracket, which Mowu you faced, result and turn) with JSON export/import.
 - **Persistence.** Settings, the game in progress and match history are saved to `localStorage`, so a reload
   doesn't lose your game.
 

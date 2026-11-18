@@ -350,6 +350,14 @@ describe('buildMatchRecord', () => {
     expect(buildMatchRecord(game, true)).toMatchObject({ deckName: 'Unnamed Deck', won: true, winReason: 'life', eventCount: 3 });
   });
 
+  it('records which Mowu was faced (none for a generic opponent)', () => {
+    expect(buildMatchRecord({ ...game, opponentCommander: { id: 'warlord', name: 'Warlord Mowu' } }, true)).toMatchObject({
+      commanderId: 'warlord',
+      commanderName: 'Warlord Mowu',
+    });
+    expect(buildMatchRecord({ ...game, opponentCommander: null }, true).commanderId).toBeUndefined();
+  });
+
   it('records losses without a win reason', () => {
     expect(buildMatchRecord(game, false)).toMatchObject({ won: false, winReason: undefined });
   });

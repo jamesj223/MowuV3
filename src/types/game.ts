@@ -173,6 +173,8 @@ export interface MatchRecord {
   eventCount: number;
   won: boolean;                    // false = conceded / lost
   lossReason?: LossReason;         // only set for losses
+  commanderId?: string;            // which Mowu was faced (absent: generic opponent / older records)
+  commanderName?: string;
 }
 
 export interface DeckProfile {
