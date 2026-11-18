@@ -47,6 +47,16 @@
 
 ## Up Next
 
+- **Insurance cards for each Mowu's own weak spot (idea, owner, playtest 2026-11-18).** Fits ADR-024: covers
+  Mowu's *own* known weaknesses, as a real deck builder would, rather than reading the player. Mostly static
+  text the player respects when resolving their own spells (the app needn't detect anything). First ideas:
+  - Warlord (board wipes): enchantment giving his creatures indestructible, or a rebuild card.
+  - Mecha-Mowu (removal on his one threat): equipment granting hexproof/ward while attached.
+  - Tax Collector (creature decks): a tax on creature spells or on every spell.
+  - Scholar (fast aggression): cheap high-toughness blockers, or a fog-style "prevent combat damage" card.
+  - Archmage (exposed combo pieces): Arcane Sentinel exists; maybe one more protective piece.
+  - Alchemist (poison needs to connect): evasion for his Toxic creatures (Flying, "can't be blocked").
+
 - **Auto-continue where waiting adds nothing (Phase 3 tuning pass).** The Phase 2 progress-bar auto-skip
   (5s, hover pauses, Space skips) only fires on *idle* opponent turns, which Phase 3 made rare (Mowu acts
   every turn from B2). Extend it to: the end-of-turn summary after a turn with **no combat** (the player has
