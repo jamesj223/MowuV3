@@ -47,6 +47,12 @@
 
 ## Up Next
 
+- **Pup Soldiers can't block? (playtest 2026-11-18).** Leaning yes: removes most blocking ambiguity in Warlord
+  games (a stack of 7 pups with no blocking rule is hard to adjudicate), fits the aggro archetype and the flavour
+  ("eager pups only charge"), like real go-wide tokens. Cost: Warlord must race (fine per ADR-024; pairs with
+  insurance cards). Alternative: keep them able to block under whatever blocking rule is chosen (see "Clear
+  blocking rules"). Same question may apply to Toxic Spores.
+
 - **Clear blocking rules (playtest 2026-11-18).** Several "Blocks your biggest attacker if able" blockers plus
   evasion (e.g. one unblockable attacker that isn't the biggest) make it unclear who blocks what. Current
   reading: "if able" skips attackers it can't legally block; several such blockers double-block your biggest
